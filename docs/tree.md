@@ -1,9 +1,9 @@
-# mcp-ts-template - Directory Structure
+# survey-mcp-server - Directory Structure
 
-Generated on: 2025-09-30 22:32:32
+Generated on: 2025-10-04 10:43:56
 
 ```
-mcp-ts-template
+survey-mcp-server
 ├── .clinerules
 │   └── AGENTS.md
 ├── .github
@@ -12,14 +12,12 @@ mcp-ts-template
 │   └── FUNDING.yml
 ├── .husky
 │   └── pre-commit
-├── .storage
 ├── .vscode
 │   └── settings.json
 ├── changelog
 │   └── archive1.md
 ├── docs
-│   ├── mcp-elicitation-summary.md
-│   ├── publishing-mcp-server-registry.md
+│   ├── survey-mcp-server-spec.md
 │   └── tree.md
 ├── scripts
 │   ├── clean.ts
@@ -59,11 +57,14 @@ mcp-ts-template
 │   │   ├── tools
 │   │   │   ├── definitions
 │   │   │   │   ├── index.ts
-│   │   │   │   ├── template-cat-fact.tool.ts
-│   │   │   │   ├── template-code-review-sampling.tool.ts
-│   │   │   │   ├── template-echo-message.tool.ts
-│   │   │   │   ├── template-image-test.tool.ts
-│   │   │   │   └── template-madlibs-elicitation.tool.ts
+│   │   │   │   ├── survey-complete-session.tool.ts
+│   │   │   │   ├── survey-export-results.tool.ts
+│   │   │   │   ├── survey-get-progress.tool.ts
+│   │   │   │   ├── survey-get-question.tool.ts
+│   │   │   │   ├── survey-list-available.tool.ts
+│   │   │   │   ├── survey-resume-session.tool.ts
+│   │   │   │   ├── survey-start-session.tool.ts
+│   │   │   │   └── survey-submit-response.tool.ts
 │   │   │   ├── utils
 │   │   │   │   ├── toolDefinition.ts
 │   │   │   │   └── toolHandlerFactory.ts
@@ -101,13 +102,22 @@ mcp-ts-template
 │   │   │   │   └── openrouter.provider.ts
 │   │   │   ├── index.ts
 │   │   │   └── types.ts
-│   │   └── speech
+│   │   ├── speech
+│   │   │   ├── core
+│   │   │   │   ├── ISpeechProvider.ts
+│   │   │   │   └── SpeechService.ts
+│   │   │   ├── providers
+│   │   │   │   ├── elevenlabs.provider.ts
+│   │   │   │   └── whisper.provider.ts
+│   │   │   ├── index.ts
+│   │   │   └── types.ts
+│   │   └── survey
 │   │       ├── core
-│   │       │   ├── ISpeechProvider.ts
-│   │       │   └── SpeechService.ts
+│   │       │   ├── ISurveyProvider.ts
+│   │       │   ├── SurveyService.ts
+│   │       │   └── validation.ts
 │   │       ├── providers
-│   │       │   ├── elevenlabs.provider.ts
-│   │       │   └── whisper.provider.ts
+│   │       │   └── filesystem.provider.ts
 │   │       ├── index.ts
 │   │       └── types.ts
 │   ├── storage
@@ -178,6 +188,12 @@ mcp-ts-template
 │   │   └── index.ts
 │   ├── index.ts
 │   └── worker.ts
+├── surveys
+│   ├── customer-feedback
+│   │   └── satisfaction
+│   │       └── q1-2025.json
+│   └── default-tenant
+│       └── sess_UJIFP3.json
 ├── tests
 │   ├── config
 │   │   └── index.int.test.ts
@@ -187,11 +203,15 @@ mcp-ts-template
 │   │   │       └── echo.resource.test.ts
 │   │   ├── tools
 │   │   │   └── definitions
-│   │   │       ├── template-cat-fact.tool.test.ts
-│   │   │       ├── template-code-review-sampling.tool.test.ts
-│   │   │       ├── template-echo-message.tool.test.ts
-│   │   │       ├── template-image-test.tool.test.ts
-│   │   │       └── template-madlibs-elicitation.tool.test.ts
+│   │   │       ├── survey-complete-session.tool.test.ts
+│   │   │       ├── survey-export-results.tool.test.ts
+│   │   │       ├── survey-get-progress.tool.test.ts
+│   │   │       ├── survey-get-question.tool.test.ts
+│   │   │       ├── survey-list-available.tool.test.ts
+│   │   │       ├── survey-resume-session.tool.test.ts
+│   │   │       ├── survey-start-session.tool.test.ts
+│   │   │       ├── survey-submit-response.tool.test.ts
+│   │   │       └── test-utils.ts
 │   │   └── transports
 │   │       └── auth
 │   │           └── lib

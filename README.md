@@ -1,28 +1,210 @@
 <div align="center">
-  <h1>mcp-ts-template</h1>
-  <p><b>Production-grade TypeScript template for building Model Context Protocol (MCP) servers. Ships with declarative tools/resources, robust error handling, DI, easy auth, optional OpenTelemetry, and first-class support for both local and edge (Cloudflare Workers) runtimes.</b></p>
+  <h1>@cyanheads/survey-mcp-server</h1>
+  <p><b>Transform LLMs into intelligent interviewers. A production-grade MCP server for conducting dynamic, conversational surveys with structured data collection. Features skip logic, session resume, multi-tenancy, and pluggable storage backends.</b></p>
 </div>
 
 <div align="center">
 
-[![Version](https://img.shields.io/badge/Version-2.3.3-blue.svg?style=flat-square)](./CHANGELOG.md) [![MCP Spec](https://img.shields.io/badge/MCP%20Spec-2025--06--18-8A2BE2.svg?style=flat-square)](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/docs/specification/2025-06-18/changelog.mdx) [![MCP SDK](https://img.shields.io/badge/MCP%20SDK-^1.18.2-green.svg?style=flat-square)](https://modelcontextprotocol.io/) [![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg?style=flat-square)](./LICENSE) [![Status](https://img.shields.io/badge/Status-Stable-brightgreen.svg?style=flat-square)](https://github.com/cyanheads/mcp-ts-template/issues) [![TypeScript](https://img.shields.io/badge/TypeScript-^5.9.3-3178C6.svg?style=flat-square)](https://www.typescriptlang.org/) [![Bun](https://img.shields.io/badge/Bun-v1.2.23-blueviolet.svg?style=flat-square)](https://bun.sh/) [![Code Coverage](https://img.shields.io/badge/Coverage-87.74%25-brightgreen.svg?style=flat-square)](./coverage/lcov-report/)
+[![Version](https://img.shields.io/badge/Version-1.0.0-blue.svg?style=flat-square)](./CHANGELOG.md) [![MCP Spec](https://img.shields.io/badge/MCP%20Spec-2025--06--18-8A2BE2.svg?style=flat-square)](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/docs/specification/2025-06-18/changelog.mdx) [![MCP SDK](https://img.shields.io/badge/MCP%20SDK-^1.18.2-green.svg?style=flat-square)](https://modelcontextprotocol.io/) [![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg?style=flat-square)](./LICENSE) [![Status](https://img.shields.io/badge/Status-In%20Development-yellow.svg?style=flat-square)](https://github.com/cyanheads/survey-mcp-server/issues) [![TypeScript](https://img.shields.io/badge/TypeScript-^5.9.3-3178C6.svg?style=flat-square)](https://www.typescriptlang.org/) [![Bun](https://img.shields.io/badge/Bun-v1.2.23-blueviolet.svg?style=flat-square)](https://bun.sh/)
 
 </div>
 
 ---
 
+## 🛠️ Tools Overview
+
+This server provides eight powerful tools for managing the complete survey lifecycle with LLM-driven interactions:
+
+| Tool Name                 | Description                                                                                            |
+| :------------------------ | :----------------------------------------------------------------------------------------------------- |
+| `survey_list_available`   | Discover available surveys in the definitions directory.                                               |
+| `survey_start_session`    | Initialize a new session with complete survey context, all questions, and initial suggested questions. |
+| `survey_get_question`     | Refresh a specific question's eligibility status after state changes (useful for conditional logic).   |
+| `survey_submit_response`  | Record participant answers with validation, returning updated progress and next suggested questions.   |
+| `survey_get_progress`     | Check completion status, remaining required/optional questions, and completion eligibility.            |
+| `survey_complete_session` | Finalize a completed session (requires all required questions answered).                               |
+| `survey_export_results`   | Export session data in CSV or JSON format with optional filtering by status, date range, etc.          |
+| `survey_resume_session`   | Resume an incomplete session, restoring full context including answered questions and progress.        |
+
+### `survey_list_available`
+
+**Discover available surveys** loaded from your survey definitions directory.
+
+**Key Features:**
+
+- Lists all surveys discovered via recursive directory scan of `SURVEY_DEFINITIONS_PATH`
+- Returns survey metadata: ID, title, description, estimated duration, and question count
+- Optional tenant filtering for multi-tenant deployments
+
+**Example Use Cases:**
+
+- "Show me all available surveys"
+- "What surveys can participants take?"
+- "List surveys for tenant X"
+
+---
+
+### `survey_start_session`
+
+**Initialize a new survey session** with complete context for LLM-driven conversations.
+
+**Key Features:**
+
+- Creates new session with unique session ID and participant tracking
+- Loads complete survey definition with all questions upfront
+- Returns initial 3-5 suggested questions based on eligibility (unconditional questions first, required before optional)
+- Each question includes `currentlyEligible` flag and `eligibilityReason` for transparency
+- Provides `guidanceForLLM` field with conversational instructions
+- Supports session metadata for tracking source, user agent, etc.
+
+**Example Use Cases:**
+
+- "Start the customer satisfaction survey for participant ABC123"
+- "Begin a new session for the Q1 feedback survey"
+- "Initialize survey session with metadata: source=web, userAgent=Claude"
+
+---
+
+### `survey_get_question`
+
+**Refresh a question's eligibility** and details after session state changes.
+
+**Key Features:**
+
+- Returns current eligibility status based on latest session state
+- Provides eligibility reason (e.g., "Conditional logic satisfied", "Always available")
+- Indicates if question was already answered
+- Useful for checking if conditional questions became available after previous answers
+
+**Example Use Cases:**
+
+- "Has question q2 become available yet?"
+- "Check if the follow-up question is now eligible"
+- "Refresh question details after the participant answered the dependency"
+
+---
+
+### `survey_submit_response`
+
+**Record participant answers** with validation and get dynamic response guidance.
+
+**Key Features:**
+
+- Validates responses against question constraints (min/max length, patterns, required fields, etc.)
+- Returns validation errors with specific, actionable feedback
+- Updates session progress (percentage complete, questions answered, time remaining estimate)
+- Returns `updatedEligibility` array showing newly available conditional questions
+- Provides 3-5 refreshed `nextSuggestedQuestions` based on new state
+- Includes `guidanceForLLM` with context-aware instructions
+
+**Example Use Cases:**
+
+- "Submit answer 'very-satisfied' for question q1"
+- "Record the participant's email: user@example.com"
+- "Save free-form response with validation"
+
+---
+
+### `survey_get_progress`
+
+**Check session status** and completion eligibility.
+
+**Key Features:**
+
+- Returns completion status: `in-progress`, `completed`, `abandoned`
+- Progress metrics: total questions, answered count, required remaining, percentage complete
+- Lists all unanswered required questions (with eligibility status)
+- Lists all unanswered optional questions (with eligibility status)
+- `canComplete` boolean indicating if session can be finalized
+- `completionBlockers` array explaining what's preventing completion
+
+**Example Use Cases:**
+
+- "How much of the survey is complete?"
+- "What required questions are still unanswered?"
+- "Can we complete the survey now?"
+
+---
+
+### `survey_complete_session`
+
+**Finalize a completed session** when all required questions have been answered.
+
+**Key Features:**
+
+- Validates that all required questions (including conditionally required) are answered
+- Updates session status to `completed` and sets `completedAt` timestamp
+- Returns summary with total questions answered and session duration
+- Prevents duplicate completion
+
+**Example Use Cases:**
+
+- "Complete the survey session"
+- "Finalize session sess_abc123"
+- "Mark the survey as finished"
+
+---
+
+### `survey_export_results`
+
+**Export session data** for analysis and reporting.
+
+**Key Features:**
+
+- Export in CSV or JSON format
+- Filter by survey ID, status, date range, and custom criteria
+- Returns formatted data with record count and generation timestamp
+- CSV format includes one row per session with flattened question responses
+- JSON format preserves full session structure
+
+**Example Use Cases:**
+
+- "Export all completed responses for survey customer-satisfaction-q1-2025 as CSV"
+- "Get JSON export of sessions completed in January 2025"
+- "Export in-progress sessions for analysis"
+
+---
+
+### `survey_resume_session`
+
+**Resume an incomplete session** with full context restoration.
+
+**Key Features:**
+
+- Restores complete survey context and session state
+- Returns all previously answered questions with responses
+- Provides 3-5 refreshed `nextSuggestedQuestions` for remaining questions
+- Shows elapsed time since last activity
+- Current progress summary (percentage, remaining questions)
+- Includes `guidanceForLLM` with welcome-back messaging suggestions
+
+**Example Use Cases:**
+
+- "Resume session sess_abc123"
+- "Continue the survey where the participant left off"
+- "Restore session state for participant to finish later"
+
 ## ✨ Features
 
-- **Declarative Tools & Resources**: Define capabilities in single, self-contained files. The framework handles registration and execution.
-- **Elicitation Support**: Tools can interactively prompt the user for missing parameters during execution, streamlining user workflows.
-- **Robust Error Handling**: A unified `McpError` system ensures consistent, structured error responses across the server.
+This server is built on the [`mcp-ts-template`](https://github.com/cyanheads/mcp-ts-template) and inherits its rich feature set:
+
+- **Declarative Tools**: Define capabilities in single, self-contained files. The framework handles registration, validation, and execution.
+- **Robust Error Handling**: A unified `McpError` system ensures consistent, structured error responses.
 - **Pluggable Authentication**: Secure your server with zero-fuss support for `none`, `jwt`, or `oauth` modes.
 - **Abstracted Storage**: Swap storage backends (`in-memory`, `filesystem`, `Supabase`, `Cloudflare KV/R2`) without changing business logic.
-- **Full-Stack Observability**: Get deep insights with structured logging (Pino) and optional, auto-instrumented OpenTelemetry for traces and metrics.
+- **Full-Stack Observability**: Deep insights with structured logging (Pino) and optional, auto-instrumented OpenTelemetry for traces and metrics.
 - **Dependency Injection**: Built with `tsyringe` for a clean, decoupled, and testable architecture.
-- **Service Integrations**: Pluggable services for external APIs, including LLM providers (OpenRouter) and text-to-speech (ElevenLabs).
-- **Rich Built-in Utility Suite**: Helpers for parsing (PDF, YAML, CSV), scheduling, security, and more.
 - **Edge-Ready**: Write code once and run it seamlessly on your local machine or at the edge on Cloudflare Workers.
+
+Plus, specialized features for **Survey Management**:
+
+- **LLM-Driven Surveys**: Tools provide rich context (progress, next suggested questions, validation results) to guide natural conversation flow.
+- **Hybrid Flow Control**: Guided mode with 3-5 suggested questions + flexible ordering based on conversation context.
+- **Conditional Logic**: Skip logic and branching based on previous answers with real-time eligibility updates.
+- **JSON-Based Survey Definitions**: Define surveys in simple JSON files with recursive directory scanning.
+- **Multiple Question Types**: Free-form text, multiple choice, rating scales, email, number, and boolean questions.
+- **Validation Engine**: Min/max length, patterns, required fields, and custom constraints.
+- **Session Resume**: Built-in state management allows participants to pause and continue later.
 
 ## 🚀 Getting Started
 
@@ -33,11 +215,13 @@ Add the following to your MCP Client configuration file (e.g., `cline_mcp_settin
 ```json
 {
   "mcpServers": {
-    "mcp-ts-template": {
+    "survey-mcp-server": {
       "command": "bunx",
-      "args": ["mcp-ts-template@latest"],
+      "args": ["survey-mcp-server@latest"],
       "env": {
-        "MCP_LOG_LEVEL": "info"
+        "MCP_LOG_LEVEL": "info",
+        "SURVEY_DEFINITIONS_PATH": "./surveys",
+        "SURVEY_RESPONSES_PATH": "./storage/responses"
       }
     }
   }
@@ -53,13 +237,13 @@ Add the following to your MCP Client configuration file (e.g., `cline_mcp_settin
 1.  **Clone the repository:**
 
 ```sh
-git clone https://github.com/cyanheads/mcp-ts-template.git
+git clone https://github.com/cyanheads/survey-mcp-server.git
 ```
 
 2.  **Navigate into the directory:**
 
 ```sh
-cd mcp-ts-template
+cd survey-mcp-server
 ```
 
 3.  **Install dependencies:**
@@ -68,167 +252,60 @@ cd mcp-ts-template
 bun install
 ```
 
-## 🛠️ Understanding the Template: Tools & Resources
+4.  **Create example surveys:**
 
-This template includes working examples of tools and resources.
-
-### 1. Example Tool: `template_echo_message`
-
-This tool echoes back a message with optional formatting. You can find the full source at `src/mcp-server/tools/definitions/template-echo-message.tool.ts`.
-
-<details>
-<summary>Click to see the `echoTool` definition structure</summary>
-
-```ts
-// Located at: src/mcp-server/tools/definitions/template-echo-message.tool.ts
-import { z } from 'zod';
-import type {
-  SdkContext,
-  ToolDefinition,
-} from '@/mcp-server/tools/utils/toolDefinition.js';
-import { withToolAuth } from '@/mcp-server/transports/auth/lib/withAuth.js';
-import { type RequestContext, logger } from '@/utils/index.js';
-
-// 1. Define Input and Output Schemas with Zod for validation.
-const InputSchema = z.object({
-  message: z.string().min(1).describe('The message to echo back.'),
-  mode: z
-    .enum(['standard', 'uppercase', 'lowercase'])
-    .default('standard')
-    .describe('Formatting mode.'),
-  repeat: z
-    .number()
-    .int()
-    .min(1)
-    .max(5)
-    .default(1)
-    .describe('Number of times to repeat the message.'),
-});
-
-const OutputSchema = z.object({
-  repeatedMessage: z
-    .string()
-    .describe('The final, formatted, and repeated message.'),
-  // ... other fields from the actual file
-});
-
-// 2. Implement the pure business logic for the tool.
-async function echoToolLogic(
-  input: z.infer<typeof InputSchema>,
-  appContext: RequestContext,
-  sdkContext: SdkContext,
-): Promise<z.infer<typeof OutputSchema>> {
-  // ... logic to format and repeat the message
-  const formattedMessage = input.message.toUpperCase(); // simplified for example
-  const repeatedMessage = Array(input.repeat).fill(formattedMessage).join(' ');
-  return { repeatedMessage };
-}
-
-// 3. Assemble the final Tool Definition.
-export const echoTool: ToolDefinition<typeof InputSchema, typeof OutputSchema> =
-  {
-    name: 'template_echo_message', // The official tool name
-    title: 'Template Echo Message',
-    description:
-      'Echoes a message back with optional formatting and repetition.',
-    inputSchema: InputSchema,
-    outputSchema: OutputSchema,
-    logic: withToolAuth(['tool:echo:read'], echoToolLogic), // Secure the tool
-  };
+```sh
+mkdir -p surveys/examples
+# Add your survey JSON files to surveys/examples/
+# See docs/survey-mcp-server-spec.md for schema details
 ```
 
-The `echoTool` is registered in `src/mcp-server/tools/definitions/index.ts`, making it available to the server on startup. For an example of how to use the new elicitation feature, see `template_madlibs_elicitation.tool.ts`.
+## 🛠️ Core Capabilities: Survey Tools
 
-</details>
+This server equips AI agents with specialized tools to conduct dynamic, conversational surveys while maintaining structured data collection.
 
-### 2. Example Resource: `echo-resource`
+### Example Interaction Flow
 
-This resource provides a simple echo response via a URI. The source is located at `src/mcp-server/resources/definitions/echo.resource.ts`.
+```
+1. LLM calls survey_start_session
+   → Receives full survey context, all questions, and first 3-5 suggested questions
 
-<details>
-<summary>Click to see the `echoResourceDefinition` structure</summary>
+2. LLM asks questions naturally in conversation
+   → Follows suggestions but can adapt order based on context
+   → Uses natural language while ensuring survey questions are covered
 
-```ts
-// Located at: src/mcp-server/resources/definitions/echo.resource.ts
-import { z } from 'zod';
-import type { ResourceDefinition } from '@/mcp-server/resources/utils/resourceDefinition.js';
-import { withResourceAuth } from '@/mcp-server/transports/auth/lib/withAuth.js';
-import { type RequestContext, logger } from '@/utils/index.js';
+3. For each answer, LLM calls survey_submit_response
+   → Receives validation feedback (re-prompts if needed)
+   → Gets progress update (50% complete, 2 of 4 questions answered)
+   → Refreshed suggestions with newly eligible conditional questions
 
-// 1. Define Parameter and Output Schemas.
-const ParamsSchema = z.object({
-  message: z.string().optional().describe('Message to echo from the URI.'),
-});
+4. LLM can check survey_get_progress anytime
+   → Knows exactly what's required vs optional
+   → Understands what remains before completion is possible
 
-const OutputSchema = z.object({
-  message: z.string().describe('The echoed message.'),
-  timestamp: z.string().datetime().describe('Timestamp of the response.'),
-  requestUri: z.string().url().describe('The original request URI.'),
-});
-
-// 2. Implement the pure read logic for the resource.
-function echoLogic(
-  uri: URL,
-  params: z.infer<typeof ParamsSchema>,
-  context: RequestContext,
-): z.infer<typeof OutputSchema> {
-  const messageToEcho = params.message || uri.hostname || 'Default echo';
-  return {
-    message: messageToEcho,
-    timestamp: new Date().toISOString(),
-    requestUri: uri.href,
-  };
-}
-
-// 3. Assemble the final Resource Definition.
-export const echoResourceDefinition: ResourceDefinition<
-  typeof ParamsSchema,
-  typeof OutputSchema
-> = {
-  name: 'echo-resource', // The official resource name
-  title: 'Echo Message Resource',
-  description: 'A simple echo resource that returns a message.',
-  uriTemplate: 'echo://{message}',
-  paramsSchema: ParamsSchema,
-  outputSchema: OutputSchema,
-  logic: withResourceAuth(['resource:echo:read'], echoLogic), // Secure the resource
-};
+5. When all required questions answered, LLM calls survey_complete_session
+   → Session finalized with timestamp and summary
+   → Ready for export via survey_export_results
 ```
 
-Like the tool, `echoResourceDefinition` is registered in `src/mcp-server/resources/definitions/index.ts`.
+📖 **[View detailed specification and examples →](./docs/survey-mcp-server-spec.md)**
 
-</details>
-
-## ⚙️ Core Concepts
-
-### Configuration
+## ⚙️ Configuration
 
 All configuration is centralized and validated at startup in `src/config/index.ts`. Key environment variables in your `.env` file include:
 
-| Variable                | Description                                                                    | Default     |
-| :---------------------- | :----------------------------------------------------------------------------- | :---------- |
-| `MCP_TRANSPORT_TYPE`    | The transport to use: `stdio` or `http`.                                       | `http`      |
-| `MCP_HTTP_PORT`         | The port for the HTTP server.                                                  | `3010`      |
-| `MCP_AUTH_MODE`         | Authentication mode: `none`, `jwt`, or `oauth`.                                | `none`      |
-| `STORAGE_PROVIDER_TYPE` | Storage backend: `in-memory`, `filesystem`, `supabase`, `cloudflare-kv`, `r2`. | `in-memory` |
-| `OTEL_ENABLED`          | Set to `true` to enable OpenTelemetry.                                         | `false`     |
-| `LOG_LEVEL`             | The minimum level for logging.                                                 | `info`      |
-
-### Authentication & Authorization
-
-- **Modes**: `none` (default), `jwt` (requires `MCP_AUTH_SECRET_KEY`), or `oauth` (requires `OAUTH_ISSUER_URL` and `OAUTH_AUDIENCE`).
-- **Enforcement**: Wrap your tool/resource `logic` functions with `withToolAuth([...])` or `withResourceAuth([...])` to enforce scope checks. Scope checks are bypassed for developer convenience when auth mode is `none`.
-
-### Storage
-
-- **Service**: A DI-managed `StorageService` provides a consistent API for persistence. **Never access `fs` or other storage SDKs directly from tool logic.**
-- **Providers**: The default is `in-memory`. Node-only providers include `filesystem`. Edge-compatible providers include `supabase`, `cloudflare-kv`, and `cloudflare-r2`.
-- **Multi-Tenancy**: The `StorageService` requires `context.tenantId`. This is automatically propagated from the `tid` claim in a JWT when auth is enabled.
-
-### Observability
-
-- **Structured Logging**: Pino is integrated out-of-the-box. All logs are JSON and include the `RequestContext`.
-- **OpenTelemetry**: Disabled by default. Enable with `OTEL_ENABLED=true` and configure OTLP endpoints. Traces, metrics (duration, payload sizes), and errors are automatically captured for every tool call.
+| Variable                  | Description                                                                    | Default               |
+| :------------------------ | :----------------------------------------------------------------------------- | :-------------------- |
+| `SURVEY_DEFINITIONS_PATH` | Path to directory containing survey JSON files (recursive scan).               | `./surveys`           |
+| `SURVEY_RESPONSES_PATH`   | Path to directory for storing session responses (filesystem mode).             | `./storage/responses` |
+| `MCP_TRANSPORT_TYPE`      | The transport to use: `stdio` or `http`.                                       | `http`                |
+| `MCP_HTTP_PORT`           | The port for the HTTP server.                                                  | `3010`                |
+| `MCP_AUTH_MODE`           | Authentication mode: `none`, `jwt`, or `oauth`.                                | `none`                |
+| `STORAGE_PROVIDER_TYPE`   | Storage backend: `in-memory`, `filesystem`, `supabase`, `cloudflare-kv`, `r2`. | `in-memory`           |
+| `OTEL_ENABLED`            | Set to `true` to enable OpenTelemetry.                                         | `false`               |
+| `LOG_LEVEL`               | The minimum level for logging (`debug`, `info`, `warn`, `error`).              | `info`                |
+| `MCP_AUTH_SECRET_KEY`     | **Required for `jwt` auth.** A 32+ character secret key.                       | `(none)`              |
+| `OAUTH_ISSUER_URL`        | **Required for `oauth` auth.** URL of the OIDC provider.                       | `(none)`              |
 
 ## ▶️ Running the Server
 
@@ -267,43 +344,34 @@ bun deploy:dev
 ```
 
 3.  **Deploy to Cloudflare**:
-    `sh
-bun deploy:prod
-` > **Note**: The `wrangler.toml` file is pre-configured to enable `nodejs_compat` for best results.
+    ```sh
+    bun deploy:prod
+    ```
 
 ## 📂 Project Structure
 
-| Directory                              | Purpose & Contents                                                                   |
-| :------------------------------------- | :----------------------------------------------------------------------------------- |
-| `src/mcp-server/tools/definitions`     | Your tool definitions (`*.tool.ts`). This is where you add new capabilities.         |
-| `src/mcp-server/resources/definitions` | Your resource definitions (`*.resource.ts`). This is where you add new data sources. |
-| `src/mcp-server/transports`            | Implementations for HTTP and STDIO transports, including auth middleware.            |
-| `src/storage`                          | The `StorageService` abstraction and all storage provider implementations.           |
-| `src/services`                         | Integrations with external services (e.g., the default OpenRouter LLM provider).     |
-| `src/container`                        | Dependency injection container registrations and tokens.                             |
-| `src/utils`                            | Core utilities for logging, error handling, performance, security, and telemetry.    |
-| `src/config`                           | Environment variable parsing and validation with Zod.                                |
-| `tests/`                               | Unit and integration tests, mirroring the `src/` directory structure.                |
+| Directory                   | Purpose & Contents                                                                  |
+| :-------------------------- | :---------------------------------------------------------------------------------- |
+| `surveys/`                  | **Survey definitions** (JSON files). Nested directories supported for organization. |
+| `storage/responses/`        | **Session responses** (when using filesystem storage). Organized by tenant ID.      |
+| `src/mcp-server/tools`      | **Survey tool definitions** (`survey-*.tool.ts`). 8 tools for complete lifecycle.   |
+| `src/mcp-server/resources`  | Resource definitions for survey metadata and discovery.                             |
+| `src/services/survey/`      | Survey service with filesystem provider for loading definitions.                    |
+| `src/mcp-server/transports` | Implementations for HTTP and STDIO transports, including auth middleware.           |
+| `src/storage`               | `StorageService` abstraction and all storage provider implementations.              |
+| `src/container`             | Dependency injection container registrations and tokens.                            |
+| `src/utils`                 | Core utilities for logging, error handling, performance, and security.              |
+| `src/config`                | Environment variable parsing and validation with Zod.                               |
+| `tests/`                    | Unit and integration tests, mirroring the `src/` directory structure.               |
+| `docs/`                     | Detailed specifications and guides (see `survey-mcp-server-spec.md`).               |
 
 ## 🧑‍💻 Agent Development Guide
 
-For a strict set of rules when using this template with an AI agent, please refer to **`AGENTS.md`**. Key principles include:
+For strict rules when using this server with an AI agent, refer to the **`.clinerules`** file (or `AGENTS.md`) in this repository. Key principles include:
 
-- **Logic Throws, Handlers Catch**: Never use `try/catch` in your tool/resource `logic`. Throw an `McpError` instead.
-- **Use Elicitation for Missing Input**: If a tool requires user input that wasn't provided, use the `elicitInput` function from the `SdkContext` to ask the user for it.
-- **Pass the Context**: Always pass the `RequestContext` object through your call stack.
-- **Use the Barrel Exports**: Register new tools and resources only in the `index.ts` barrel files.
-
-## ❓ FAQ
-
-- **Does this work with both STDIO and Streamable HTTP?**
-  - Yes. Both transports are first-class citizens. Use `bun run dev:stdio` or `bun run dev:http`.
-- **Can I deploy this to the edge?**
-  - Yes. The template is designed for Cloudflare Workers. Run `bun run build:worker` and deploy with Wrangler.
-- **Do I have to use OpenTelemetry?**
-  - No, it is disabled by default. Enable it by setting `OTEL_ENABLED=true` in your `.env` file.
-- **How do I publish my server to the MCP Registry?**
-  - Follow the step-by-step guide in `docs/publishing-mcp-server-registry.md`.
+- **Logic Throws, Handlers Catch**: Never use `try/catch` in your tool `logic`. Throw an `McpError` instead.
+- **Pass the Context**: Always pass the `RequestContext` object through your call stack for logging and tracing.
+- **Use the Barrel Exports**: Register new tools and resources only in the `index.ts` barrel files within their respective `definitions` directories.
 
 ## 🤝 Contributing
 

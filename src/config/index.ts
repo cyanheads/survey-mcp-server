@@ -165,6 +165,10 @@ const ConfigSchema = z.object({
       .default('in-memory'),
     filesystemPath: z.string().default('./.storage'), // This remains, but will only be used if providerType is 'filesystem'
   }),
+  survey: z.object({
+    definitionsPath: z.string().default('./surveys'),
+    responsesPath: z.string().default('./storage/responses'),
+  }),
   openTelemetry: z.object({
     enabled: z.coerce.boolean().default(false),
     serviceName: z.string(),
@@ -286,6 +290,10 @@ const parseConfig = () => {
     storage: {
       providerType: env.STORAGE_PROVIDER_TYPE,
       filesystemPath: env.STORAGE_FILESYSTEM_PATH,
+    },
+    survey: {
+      definitionsPath: env.SURVEY_DEFINITIONS_PATH,
+      responsesPath: env.SURVEY_RESPONSES_PATH,
     },
     openTelemetry: {
       enabled: env.OTEL_ENABLED,

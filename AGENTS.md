@@ -1,8 +1,8 @@
 # Agent Protocol & Architectural Mandate
 
-**Version:** 2.3.2
-**Target Project:** mcp-ts-template
-**Last Updated:** 2025-10-02
+**Version:** 1.0.0
+**Target Project:** survey-mcp-server
+**Last Updated:** 2025-10-04
 
 This document defines the operational rules for contributing to this codebase. Follow it exactly.
 
