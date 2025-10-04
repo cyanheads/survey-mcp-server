@@ -18,10 +18,15 @@ import {
   StorageService,
   StorageProvider,
   SupabaseAdminClient,
+  SurveyProvider,
+  SurveyServiceToken,
 } from '@/container/tokens.js';
 import type { ILlmProvider } from '@/services/llm/core/ILlmProvider.js';
 import { OpenRouterProvider } from '@/services/llm/providers/openrouter.provider.js';
 import { SpeechService as SpeechServiceClass } from '@/services/speech/index.js';
+import type { ISurveyProvider } from '@/services/survey/core/ISurveyProvider.js';
+import { SurveyService } from '@/services/survey/core/SurveyService.js';
+import { FilesystemSurveyProvider } from '@/services/survey/providers/filesystem.provider.js';
 import { StorageService as StorageServiceClass } from '@/storage/core/StorageService.js';
 import { createStorageProvider } from '@/storage/core/storageFactory.js';
 import type { Database } from '@/storage/providers/supabase/supabase.types.js';
@@ -136,6 +141,18 @@ export const registerCoreServices = () => {
       return new SpeechServiceClass(ttsConfig, sttConfig);
     },
   });
+
+  // Register Survey Provider (Filesystem)
+  container.register<ISurveyProvider>(SurveyProvider, {
+    useClass: FilesystemSurveyProvider,
+  });
+
+  // Register Survey Service
+  container.register<SurveyService>(
+    SurveyServiceToken,
+    { useClass: SurveyService },
+    { lifecycle: Lifecycle.Singleton },
+  );
 
   logger.info('Core services registered with the DI container.');
 };

@@ -1,0 +1,40 @@
+{
+  "sessionId": "sess_UJIFP3",
+  "surveyId": "customer-satisfaction-q1-2025",
+  "surveyVersion": "1.0",
+  "participantId": "test-participant-123",
+  "tenantId": "default-tenant",
+  "status": "completed",
+  "startedAt": "2025-10-04T10:20:28.499Z",
+  "lastActivityAt": "2025-10-04T10:21:11.256Z",
+  "completedAt": "2025-10-04T10:21:11.256Z",
+  "metadata": {},
+  "responses": {
+    "q1": {
+      "questionId": "q1",
+      "value": "satisfied",
+      "answeredAt": "2025-10-04T10:20:42.740Z",
+      "attemptCount": 1
+    },
+    "q3": {
+      "questionId": "q3",
+      "value": 8,
+      "answeredAt": "2025-10-04T10:20:49.137Z",
+      "attemptCount": 1
+    },
+    "q4": {
+      "questionId": "q4",
+      "value": "casey@example.com",
+      "answeredAt": "2025-10-04T10:20:54.992Z",
+      "attemptCount": 1
+    }
+  },
+  "progress": {
+    "totalQuestions": 4,
+    "answeredQuestions": 3,
+    "requiredAnswered": 2,
+    "requiredRemaining": 0,
+    "percentComplete": 75,
+    "estimatedTimeRemaining": "1 minutes"
+  }
+}

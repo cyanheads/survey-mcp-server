@@ -1,0 +1,64 @@
+{
+  "id": "customer-satisfaction-q1-2025",
+  "version": "1.0",
+  "metadata": {
+    "title": "Q1 2025 Customer Satisfaction Survey",
+    "description": "Quarterly customer feedback collection",
+    "estimatedDuration": "5-7 minutes",
+    "tags": ["customer-feedback", "satisfaction", "quarterly"]
+  },
+  "questions": [
+    {
+      "id": "q1",
+      "type": "multiple-choice",
+      "required": true,
+      "text": "How satisfied are you with our product?",
+      "options": [
+        { "value": "very-satisfied", "label": "Very Satisfied" },
+        { "value": "satisfied", "label": "Satisfied" },
+        { "value": "neutral", "label": "Neutral" },
+        { "value": "dissatisfied", "label": "Dissatisfied" },
+        { "value": "very-dissatisfied", "label": "Very Dissatisfied" }
+      ],
+      "validation": {
+        "required": true
+      }
+    },
+    {
+      "id": "q2",
+      "type": "free-form",
+      "required": false,
+      "text": "What could we improve?",
+      "conditional": {
+        "dependsOn": "q1",
+        "showIf": ["dissatisfied", "very-dissatisfied"]
+      },
+      "validation": {
+        "minLength": 10,
+        "maxLength": 500
+      }
+    },
+    {
+      "id": "q3",
+      "type": "rating-scale",
+      "required": true,
+      "text": "On a scale of 0-10, how likely are you to recommend us to a colleague?",
+      "scale": { "min": 0, "max": 10, "step": 1 }
+    },
+    {
+      "id": "q4",
+      "type": "email",
+      "required": false,
+      "text": "Would you like us to follow up with you? Please provide your email address.",
+      "validation": {
+        "pattern": "email"
+      }
+    }
+  ],
+  "settings": {
+    "allowSkip": true,
+    "allowResume": true,
+    "shuffleQuestions": false,
+    "maxAttempts": 3
+  }
+}

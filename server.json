@@ -1,18 +1,18 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
-  "name": "io.github.cyanheads/mcp-ts-template",
-  "description": "A production-grade TypeScript template for scalable MCP servers with built-in observability.",
+  "name": "io.github.cyanheads/survey-mcp-server",
+  "description": "MCP server for conducting dynamic, conversational surveys with structured data collection.",
   "repository": {
-    "url": "https://github.com/cyanheads/mcp-ts-template",
+    "url": "https://github.com/cyanheads/survey-mcp-server",
     "source": "github"
   },
-  "version": "2.3.3",
+  "version": "1.0.0",
   "packages": [
     {
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
-      "identifier": "mcp-ts-template",
-      "version": "2.3.3",
+      "identifier": "survey-mcp-server",
+      "version": "1.0.0",
       "runtimeHint": "bun",
       "packageArguments": [
         {
@@ -40,8 +40,8 @@
     {
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
-      "identifier": "mcp-ts-template",
-      "version": "2.3.3",
+      "identifier": "survey-mcp-server",
+      "version": "1.0.0",
       "runtimeHint": "bun",
       "packageArguments": [
         {
@@ -96,5 +96,5 @@
       }
     }
   ],
-  "mcpName": "io.github.cyanheads/mcp-ts-template"
+  "mcpName": "io.github.cyanheads/survey-mcp-server"
 }

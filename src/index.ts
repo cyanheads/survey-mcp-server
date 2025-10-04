@@ -18,10 +18,12 @@ import { type McpLogLevel, logger } from '@/utils/internal/logger.js';
 import { config as appConfigType } from '@/config/index.js';
 import container, {
   AppConfig,
+  SurveyServiceToken,
   TransportManagerToken,
   composeContainer,
 } from '@/container/index.js';
 import { TransportManager } from '@/mcp-server/transports/manager.js';
+import type { SurveyService } from '@/services/survey/core/SurveyService.js';
 
 // The container is now composed in start(), so we must resolve config there.
 let config: typeof appConfigType;
@@ -128,6 +130,14 @@ const start = async (): Promise<void> => {
   logger.info(
     `Storage service initialized with provider: ${config.storage.providerType}`,
     requestContextService.createRequestContext({ operation: 'StorageInit' }),
+  );
+
+  // Initialize Survey Service
+  const surveyService = container.resolve<SurveyService>(SurveyServiceToken);
+  await surveyService.initialize();
+  logger.info(
+    'Survey service initialized',
+    requestContextService.createRequestContext({ operation: 'SurveyInit' }),
   );
 
   transportManager = container.resolve<TransportManager>(TransportManagerToken);
