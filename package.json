@@ -1,8 +1,8 @@
 {
   "name": "@cyanheads/survey-mcp-server",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "mcpName": "io.github.cyanheads/survey-mcp-server",
-  "description": "A production-grade MCP server for conducting dynamic, conversational surveys with structured data collection. Built with TypeScript, featuring LLM-driven interactions, skip logic, multi-tenancy, and pluggable storage backends.",
+  "description": "Transform LLMs into intelligent interviewers. MCP server for conducting dynamic, conversational surveys with structured data collection. Features skip logic, session resume, multi-tenancy, and pluggable storage backends.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -181,5 +181,8 @@
       "repomix",
       "survey-mcp-server"
     ]
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

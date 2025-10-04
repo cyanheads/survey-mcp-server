@@ -6,13 +6,13 @@
     "url": "https://github.com/cyanheads/survey-mcp-server",
     "source": "github"
   },
-  "version": "1.0.0",
+  "version": "1.0.1",
   "packages": [
     {
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
-      "identifier": "survey-mcp-server",
-      "version": "1.0.0",
+      "identifier": "@cyanheads/survey-mcp-server",
+      "version": "1.0.1",
       "runtimeHint": "bun",
       "packageArguments": [
         {
@@ -31,6 +31,20 @@
           "format": "string",
           "isRequired": false,
           "default": "info"
+        },
+        {
+          "name": "SURVEY_DEFINITIONS_PATH",
+          "description": "Path to the directory containing survey definition files.",
+          "format": "string",
+          "isRequired": false,
+          "default": "./surveys"
+        },
+        {
+          "name": "SURVEY_RESPONSES_PATH",
+          "description": "Path to the directory where survey responses are stored.",
+          "format": "string",
+          "isRequired": false,
+          "default": "./storage/responses"
         }
       ],
       "transport": {
@@ -40,8 +54,8 @@
     {
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
-      "identifier": "survey-mcp-server",
-      "version": "1.0.0",
+      "identifier": "@cyanheads/survey-mcp-server",
+      "version": "1.0.1",
       "runtimeHint": "bun",
       "packageArguments": [
         {
@@ -88,6 +102,20 @@
           "format": "string",
           "isRequired": false,
           "default": "info"
+        },
+        {
+          "name": "SURVEY_DEFINITIONS_PATH",
+          "description": "Path to the directory containing survey definition files.",
+          "format": "string",
+          "isRequired": false,
+          "default": "./surveys"
+        },
+        {
+          "name": "SURVEY_RESPONSES_PATH",
+          "description": "Path to the directory where survey responses are stored.",
+          "format": "string",
+          "isRequired": false,
+          "default": "./storage/responses"
         }
       ],
       "transport": {

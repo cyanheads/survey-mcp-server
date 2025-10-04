@@ -93,7 +93,7 @@ const ConfigSchema = z.object({
     emptyStringAsUndefined,
     z.enum(['stateless', 'stateful', 'auto']).default('auto'),
   ),
-  mcpHttpPort: z.coerce.number().default(3010),
+  mcpHttpPort: z.coerce.number().default(3019),
   mcpHttpHost: z.string().default('127.0.0.1'),
   mcpHttpEndpointPath: z.string().default('/mcp'),
   mcpHttpMaxPortRetries: z.coerce.number().default(15),
