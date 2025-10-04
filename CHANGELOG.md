@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.1] - 2025-10-04
+
+### Changed
+- **Agent Protocol**: Updated `AGENTS.md` to include best practices and detailed examples for implementing `responseFormatter` functions in tools, guiding the LLM's consumption of tool output.
+- **Configuration**: Changed the default MCP HTTP port from `3010` to `3019` in `src/config/index.ts`, `Dockerfile`, `smithery.yaml`, `tests/config/index.int.test.ts and `README.md`.
+- **Packaging**: Updated `package.json` with a more descriptive summary and added a `publishConfig` for public NPM deployment. Updated `server.json` to use the scoped package name `@cyanheads/survey-mcp-server` and added environment variable arguments for survey paths.
+
+### Removed
+- **MCP Prompts & Roots**: Removed the `Prompts` and `Roots` capabilities from the server to streamline focus on core Tool and Resource functionalities. This included deleting all related definitions, registration logic, and documentation. These features can be reintroduced later if needed.
+
 ## [1.0.0] - 2025-10-04
 
 ### Added

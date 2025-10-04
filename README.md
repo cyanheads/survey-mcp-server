@@ -5,7 +5,7 @@
 
 <div align="center">
 
-[![Version](https://img.shields.io/badge/Version-1.0.0-blue.svg?style=flat-square)](./CHANGELOG.md) [![MCP Spec](https://img.shields.io/badge/MCP%20Spec-2025--06--18-8A2BE2.svg?style=flat-square)](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/docs/specification/2025-06-18/changelog.mdx) [![MCP SDK](https://img.shields.io/badge/MCP%20SDK-^1.18.2-green.svg?style=flat-square)](https://modelcontextprotocol.io/) [![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg?style=flat-square)](./LICENSE) [![Status](https://img.shields.io/badge/Status-In%20Development-yellow.svg?style=flat-square)](https://github.com/cyanheads/survey-mcp-server/issues) [![TypeScript](https://img.shields.io/badge/TypeScript-^5.9.3-3178C6.svg?style=flat-square)](https://www.typescriptlang.org/) [![Bun](https://img.shields.io/badge/Bun-v1.2.23-blueviolet.svg?style=flat-square)](https://bun.sh/)
+[![Version](https://img.shields.io/badge/Version-1.0.1-blue.svg?style=flat-square)](./CHANGELOG.md) [![MCP Spec](https://img.shields.io/badge/MCP%20Spec-2025--06--18-8A2BE2.svg?style=flat-square)](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/docs/specification/2025-06-18/changelog.mdx) [![MCP SDK](https://img.shields.io/badge/MCP%20SDK-^1.18.2-green.svg?style=flat-square)](https://modelcontextprotocol.io/) [![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg?style=flat-square)](./LICENSE) [![Status](https://img.shields.io/badge/Status-In%20Development-yellow.svg?style=flat-square)](https://github.com/cyanheads/survey-mcp-server/issues) [![TypeScript](https://img.shields.io/badge/TypeScript-^5.9.3-3178C6.svg?style=flat-square)](https://www.typescriptlang.org/) [![Bun](https://img.shields.io/badge/Bun-v1.2.23-blueviolet.svg?style=flat-square)](https://bun.sh/)
 
 </div>
 
@@ -299,7 +299,7 @@ All configuration is centralized and validated at startup in `src/config/index.t
 | `SURVEY_DEFINITIONS_PATH` | Path to directory containing survey JSON files (recursive scan).               | `./surveys`           |
 | `SURVEY_RESPONSES_PATH`   | Path to directory for storing session responses (filesystem mode).             | `./storage/responses` |
 | `MCP_TRANSPORT_TYPE`      | The transport to use: `stdio` or `http`.                                       | `http`                |
-| `MCP_HTTP_PORT`           | The port for the HTTP server.                                                  | `3010`                |
+| `MCP_HTTP_PORT`           | The port for the HTTP server.                                                  | `3019`                |
 | `MCP_AUTH_MODE`           | Authentication mode: `none`, `jwt`, or `oauth`.                                | `none`                |
 | `STORAGE_PROVIDER_TYPE`   | Storage backend: `in-memory`, `filesystem`, `supabase`, `cloudflare-kv`, `r2`. | `in-memory`           |
 | `OTEL_ENABLED`            | Set to `true` to enable OpenTelemetry.                                         | `false`               |
