@@ -17,9 +17,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { container } from 'tsyringe';
 
 import { config } from '@/config/index.js';
-import { PromptRegistry } from '@/mcp-server/prompts/prompt-registration.js';
 import { ResourceRegistry } from '@/mcp-server/resources/resource-registration.js';
-import { RootsRegistry } from '@/mcp-server/roots/roots-registration.js';
 import { ToolRegistry } from '@/mcp-server/tools/tool-registration.js';
 import { logger, requestContextService } from '@/utils/index.js';
 
@@ -55,9 +53,7 @@ export async function createMcpServerInstance(): Promise<McpServer> {
         resources: { listChanged: true },
         tools: { listChanged: true },
         elicitation: {},
-        sampling: {}, // MCP 2025-06-18: Allow tools to request LLM completions from clients
-        prompts: { listChanged: true }, // MCP 2025-06-18: Provide structured message templates
-        roots: { listChanged: true }, // MCP 2025-06-18: Workspace/filesystem context awareness
+        sampling: {},
       },
     },
   );
@@ -71,12 +67,6 @@ export async function createMcpServerInstance(): Promise<McpServer> {
 
     const resourceRegistry = container.resolve(ResourceRegistry);
     await resourceRegistry.registerAll(server);
-
-    const promptRegistry = container.resolve(PromptRegistry);
-    promptRegistry.registerAll(server);
-
-    const rootsRegistry = container.resolve(RootsRegistry);
-    void rootsRegistry.registerAll(server);
 
     logger.info('All MCP capabilities registered successfully', context);
   } catch (err) {

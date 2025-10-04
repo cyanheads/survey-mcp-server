@@ -1,6 +1,6 @@
 # survey-mcp-server - Directory Structure
 
-Generated on: 2025-10-04 10:43:56
+Generated on: 2025-10-04 11:16:51
 
 ```
 survey-mcp-server
@@ -37,13 +37,6 @@ survey-mcp-server
 │   │   ├── index.ts
 │   │   └── tokens.ts
 │   ├── mcp-server
-│   │   ├── prompts
-│   │   │   ├── definitions
-│   │   │   │   ├── code-review.prompt.ts
-│   │   │   │   └── index.ts
-│   │   │   ├── utils
-│   │   │   │   └── promptDefinition.ts
-│   │   │   └── prompt-registration.ts
 │   │   ├── resources
 │   │   │   ├── definitions
 │   │   │   │   ├── echo.resource.ts
@@ -52,8 +45,6 @@ survey-mcp-server
 │   │   │   │   ├── resourceDefinition.ts
 │   │   │   │   └── resourceHandlerFactory.ts
 │   │   │   └── resource-registration.ts
-│   │   ├── roots
-│   │   │   └── roots-registration.ts
 │   │   ├── tools
 │   │   │   ├── definitions
 │   │   │   │   ├── index.ts
