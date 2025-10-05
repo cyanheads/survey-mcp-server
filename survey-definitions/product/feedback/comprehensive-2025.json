@@ -1,0 +1,297 @@
+{
+  "id": "product-feedback-comprehensive",
+  "version": "1.0",
+  "metadata": {
+    "title": "Comprehensive Product Feedback Survey",
+    "description": "Generic product feedback survey demonstrating all question types and validation features. Collects user demographics, satisfaction ratings, feature requests, and detailed feedback with intelligent branching logic.",
+    "estimatedDuration": "8-12 minutes",
+    "tags": ["product", "feedback", "satisfaction", "features", "comprehensive"]
+  },
+  "questions": [
+    {
+      "id": "user_email",
+      "type": "email",
+      "text": "What's the user's email address?",
+      "helpText": "Used for follow-up on their feedback if needed. Never shared publicly.",
+      "required": true
+    },
+    {
+      "id": "user_role",
+      "type": "multiple-choice",
+      "text": "How do they use the product?",
+      "required": true,
+      "options": [
+        { "value": "individual", "label": "Individual User" },
+        { "value": "team-member", "label": "Team Member" },
+        { "value": "team-admin", "label": "Team Administrator" },
+        { "value": "decision-maker", "label": "Decision Maker/Executive" },
+        { "value": "developer", "label": "Developer/Technical User" }
+      ]
+    },
+    {
+      "id": "company_size",
+      "type": "multiple-choice",
+      "text": "What's their company size?",
+      "required": false,
+      "conditional": {
+        "operator": "OR",
+        "conditions": [
+          { "dependsOn": "user_role", "showIf": ["team-member"] },
+          { "dependsOn": "user_role", "showIf": ["team-admin"] },
+          { "dependsOn": "user_role", "showIf": ["decision-maker"] }
+        ]
+      },
+      "options": [
+        { "value": "1-10", "label": "1-10 employees" },
+        { "value": "11-50", "label": "11-50 employees" },
+        { "value": "51-200", "label": "51-200 employees" },
+        { "value": "201-1000", "label": "201-1,000 employees" },
+        { "value": "1000+", "label": "1,000+ employees" }
+      ]
+    },
+    {
+      "id": "usage_duration",
+      "type": "multiple-choice",
+      "text": "How long have they been using the product?",
+      "required": true,
+      "options": [
+        { "value": "less-1-week", "label": "Less than 1 week" },
+        { "value": "1-4-weeks", "label": "1-4 weeks" },
+        { "value": "1-3-months", "label": "1-3 months" },
+        { "value": "3-6-months", "label": "3-6 months" },
+        { "value": "6-12-months", "label": "6-12 months" },
+        { "value": "1-2-years", "label": "1-2 years" },
+        { "value": "2plus-years", "label": "2+ years" }
+      ]
+    },
+    {
+      "id": "usage_frequency",
+      "type": "multiple-choice",
+      "text": "How often do they use it?",
+      "required": true,
+      "options": [
+        { "value": "daily", "label": "Daily" },
+        { "value": "few-times-week", "label": "A few times a week" },
+        { "value": "weekly", "label": "Weekly" },
+        { "value": "few-times-month", "label": "A few times a month" },
+        { "value": "monthly", "label": "Monthly" },
+        { "value": "rarely", "label": "Rarely" }
+      ]
+    },
+    {
+      "id": "feature_ratings",
+      "type": "matrix",
+      "text": "How would they rate different aspects of the product?",
+      "helpText": "Get their rating for each aspect from Poor to Excellent. You can ask about them all at once or discuss each individually in conversation - whatever feels more natural.",
+      "required": true,
+      "matrix": {
+        "rows": [
+          { "id": "ease_of_use", "label": "Ease of Use" },
+          { "id": "performance", "label": "Performance & Speed" },
+          { "id": "reliability", "label": "Reliability & Stability" },
+          { "id": "features", "label": "Feature Set & Capabilities" },
+          { "id": "design", "label": "User Interface & Design" },
+          { "id": "documentation", "label": "Documentation & Help Resources" },
+          { "id": "support", "label": "Customer Support" }
+        ],
+        "columns": [
+          { "value": "poor", "label": "Poor" },
+          { "value": "fair", "label": "Fair" },
+          { "value": "good", "label": "Good" },
+          { "value": "very-good", "label": "Very Good" },
+          { "value": "excellent", "label": "Excellent" },
+          { "value": "na", "label": "N/A" }
+        ],
+        "allowMultiplePerRow": false
+      }
+    },
+    {
+      "id": "overall_satisfaction",
+      "type": "rating-scale",
+      "text": "How satisfied are they overall with the product?",
+      "helpText": "From 0 (completely dissatisfied) to 10 (completely satisfied).",
+      "required": true,
+      "scale": { "min": 0, "max": 10, "step": 1 }
+    },
+    {
+      "id": "dissatisfaction_reason",
+      "type": "multiple-select",
+      "text": "What are the main reasons they're not fully satisfied?",
+      "helpText": "All that apply. Based on your conversation about their ratings and concerns, you can suggest relevant options they might want to select. This helps identify areas for improvement.",
+      "required": false,
+      "conditional": {
+        "dependsOn": "overall_satisfaction",
+        "showIf": [0, 1, 2, 3, 4, 5, 6]
+      },
+      "options": [
+        { "value": "too-expensive", "label": "Too expensive" },
+        { "value": "missing-features", "label": "Missing features they need" },
+        { "value": "difficult-to-use", "label": "Difficult to use" },
+        { "value": "poor-performance", "label": "Poor performance" },
+        { "value": "unreliable", "label": "Unreliable or buggy" },
+        { "value": "poor-support", "label": "Poor customer support" },
+        { "value": "poor-documentation", "label": "Inadequate documentation" },
+        {
+          "value": "security-concerns",
+          "label": "Security or privacy concerns"
+        },
+        { "value": "other", "label": "Other" }
+      ],
+      "validation": {
+        "maxSelections": 5
+      }
+    },
+    {
+      "id": "dissatisfaction_details",
+      "type": "free-form",
+      "text": "Can they elaborate on what's not working for them?",
+      "helpText": "The more specific, the better we can address their concerns. Probe gently for concrete examples or scenarios where they encountered issues.",
+      "required": false,
+      "conditional": {
+        "dependsOn": "overall_satisfaction",
+        "showIf": [0, 1, 2, 3, 4, 5, 6]
+      },
+      "validation": {
+        "minLength": 20,
+        "maxLength": 1000
+      }
+    },
+    {
+      "id": "nps_score",
+      "type": "rating-scale",
+      "text": "How likely are they to recommend the product to others?",
+      "helpText": "0 = Not at all likely, 10 = Extremely likely",
+      "required": true,
+      "scale": { "min": 0, "max": 10, "step": 1 }
+    },
+    {
+      "id": "nps_reason",
+      "type": "free-form",
+      "text": "What's the main reason for their recommendation score?",
+      "helpText": "Understanding their reasoning helps us identify what's working well (for promoters) or what needs improvement (for detractors). Ask them to explain their score in their own words.",
+      "required": false,
+      "validation": {
+        "maxLength": 500
+      }
+    },
+    {
+      "id": "features_used",
+      "type": "multiple-select",
+      "text": "Which features do they use regularly?",
+      "helpText": "Features they use at least once a week. Based on your conversation about their use case and workflow, suggest relevant features they likely use.",
+      "required": false,
+      "options": [
+        { "value": "dashboard", "label": "Dashboard & Analytics" },
+        { "value": "reporting", "label": "Reporting & Exports" },
+        { "value": "collaboration", "label": "Team Collaboration" },
+        { "value": "integrations", "label": "Third-party Integrations" },
+        { "value": "automation", "label": "Automation & Workflows" },
+        { "value": "api", "label": "API Access" },
+        { "value": "mobile-app", "label": "Mobile App" },
+        { "value": "notifications", "label": "Notifications & Alerts" },
+        { "value": "customization", "label": "Customization Options" },
+        { "value": "security", "label": "Security & Compliance Features" }
+      ]
+    },
+    {
+      "id": "missing_features",
+      "type": "free-form",
+      "text": "What features or capabilities are they missing?",
+      "helpText": "Specific features, integrations, or improvements that would add value for them. Encourage them to provide concrete examples of what they wish the product could do that it currently can't.",
+      "required": false,
+      "validation": {
+        "maxLength": 1000
+      }
+    },
+    {
+      "id": "competitor_usage",
+      "type": "boolean",
+      "text": "Do they use any competing products alongside this one?",
+      "required": false
+    },
+    {
+      "id": "competitor_names",
+      "type": "free-form",
+      "text": "Which other products do they use?",
+      "helpText": "Names of other tools they use for similar purposes.",
+      "required": false,
+      "conditional": {
+        "dependsOn": "competitor_usage",
+        "showIf": [true]
+      },
+      "validation": {
+        "maxLength": 200
+      }
+    },
+    {
+      "id": "primary_use_case",
+      "type": "free-form",
+      "text": "What's their primary use case for the product?",
+      "helpText": "The main problem they're solving or task they're accomplishing. Understanding their core use case helps us see how they derive value from the product.",
+      "required": false,
+      "validation": {
+        "minLength": 10,
+        "maxLength": 500
+      }
+    },
+    {
+      "id": "biggest_pain_point",
+      "type": "free-form",
+      "text": "What's their biggest frustration with the product?",
+      "helpText": "This is a chance for them to voice their top concern. Encourage them to be candid - negative feedback is valuable for improving the product.",
+      "required": false,
+      "validation": {
+        "maxLength": 500
+      }
+    },
+    {
+      "id": "last_used_date",
+      "type": "date",
+      "text": "When did they last use the product?",
+      "helpText": "The most recent date they actively used it.",
+      "required": false,
+      "validation": {
+        "dateTime": {
+          "allowFuture": false,
+          "maxDate": "2025-12-31"
+        }
+      }
+    },
+    {
+      "id": "preferred_contact_time",
+      "type": "time",
+      "text": "If follow-up is needed, what time works best for them?",
+      "helpText": "Time in 24-hour format (e.g., 14:30 for 2:30 PM).",
+      "required": false
+    },
+    {
+      "id": "follow_up_interest",
+      "type": "multiple-choice",
+      "text": "Would they be interested in participating in future research?",
+      "helpText": "User interviews or beta testing for new features.",
+      "required": false,
+      "options": [
+        { "value": "yes-interview", "label": "Yes, user interviews" },
+        { "value": "yes-beta", "label": "Yes, beta testing new features" },
+        { "value": "yes-both", "label": "Yes, both" },
+        { "value": "no", "label": "Not at this time" }
+      ]
+    },
+    {
+      "id": "additional_comments",
+      "type": "free-form",
+      "text": "Anything else they'd like to share?",
+      "helpText": "Additional feedback not covered in the survey. Include details or suggestions the user has conveyed during your interactions with the user. You may also explicitly ask for suggestions on improvements, new features, or other comments they wish to provide.",
+      "required": false,
+      "validation": {
+        "maxLength": 2000
+      }
+    }
+  ],
+  "settings": {
+    "allowSkip": true,
+    "allowResume": true,
+    "shuffleQuestions": false,
+    "maxAttempts": 3
+  }
+}

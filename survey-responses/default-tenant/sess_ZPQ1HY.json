@@ -1,0 +1,28 @@
+{
+  "sessionId": "sess_ZPQ1HY",
+  "surveyId": "employee-onboarding-2025",
+  "surveyVersion": "1.0",
+  "participantId": "new-user-onboarding-session",
+  "tenantId": "default-tenant",
+  "status": "in-progress",
+  "startedAt": "2025-10-05T10:58:40.404Z",
+  "lastActivityAt": "2025-10-05T10:59:59.511Z",
+  "completedAt": null,
+  "metadata": {},
+  "responses": {
+    "name": {
+      "questionId": "name",
+      "value": "cyanheads",
+      "answeredAt": "2025-10-05T10:59:59.511Z",
+      "attemptCount": 1
+    }
+  },
+  "progress": {
+    "totalQuestions": 19,
+    "answeredQuestions": 1,
+    "requiredAnswered": 1,
+    "requiredRemaining": 11,
+    "percentComplete": 5,
+    "estimatedTimeRemaining": "10-15 minutes"
+  }
+}

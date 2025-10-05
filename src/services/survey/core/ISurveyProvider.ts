@@ -94,6 +94,28 @@ export interface ISurveyProvider {
   ): Promise<{ data: string; recordCount: number }>;
 
   /**
+   * Get analytics summary for a survey.
+   * @param surveyId Survey identifier
+   * @param tenantId Tenant identifier
+   * @returns Analytics summary with completion stats, response distributions, etc.
+   */
+  getAnalytics?(
+    surveyId: string,
+    tenantId: string,
+  ): Promise<{
+    totalSessions: number;
+    completedSessions: number;
+    inProgressSessions: number;
+    abandonedSessions: number;
+    averageCompletionTime?: string;
+    questionStats: Array<{
+      questionId: string;
+      responseCount: number;
+      responseDistribution?: Record<string, number>;
+    }>;
+  }>;
+
+  /**
    * Health check for the provider.
    * @returns True if the provider is operational
    */

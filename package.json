@@ -1,6 +1,6 @@
 {
   "name": "@cyanheads/survey-mcp-server",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "mcpName": "io.github.cyanheads/survey-mcp-server",
   "description": "Transform LLMs into intelligent interviewers. MCP server for conducting dynamic, conversational surveys with structured data collection. Features skip logic, session resume, multi-tenancy, and pluggable storage backends.",
   "main": "dist/index.js",

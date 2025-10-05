@@ -6,13 +6,13 @@
     "url": "https://github.com/cyanheads/survey-mcp-server",
     "source": "github"
   },
-  "version": "1.0.2",
+  "version": "1.0.3",
   "packages": [
     {
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "@cyanheads/survey-mcp-server",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "runtimeHint": "bun",
       "packageArguments": [
         {
@@ -55,7 +55,7 @@
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "@cyanheads/survey-mcp-server",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "runtimeHint": "bun",
       "packageArguments": [
         {

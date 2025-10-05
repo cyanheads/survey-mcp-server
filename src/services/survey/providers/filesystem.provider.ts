@@ -1,6 +1,25 @@
 /**
  * @fileoverview Filesystem-based survey provider implementation.
  * Loads survey definitions from JSON files and stores session data in filesystem.
+ *
+ * ARCHITECTURE NOTE: This provider exists separately from StorageService
+ * (/src/storage) because it has domain-specific storage requirements:
+ *
+ * 1. **Survey Definitions (Read-Only):**
+ *    - Recursive directory scanning at startup
+ *    - Loaded into in-memory Map for fast access
+ *    - Static JSON files (no writes)
+ *
+ * 2. **Session Responses (Dynamic):**
+ *    - Direct filesystem access for domain-specific operations
+ *    - Directory scanning with filtering (by survey, date, status)
+ *    - CSV export generation from raw session files
+ *    - Structured file paths: {responsesPath}/{tenantId}/{sessionId}.json
+ *
+ * StorageService (generic key-value with TTL, metadata envelopes) doesn't fit
+ * these specialized needs. This follows CLAUDE.md's Service Development Pattern
+ * for domain-specific storage implementations.
+ *
  * @module src/services/survey/providers/filesystem.provider
  */
 
@@ -27,13 +46,27 @@ type AppConfigType = ReturnType<typeof parseConfig>;
 
 /**
  * Filesystem-based survey provider.
- * - Surveys loaded from config.survey.definitionsPath (recursive scan)
- * - Sessions stored in config.survey.responsesPath/{tenantId}/{sessionId}.json
+ *
+ * Storage Strategy:
+ * - **Definitions:** config.survey.definitionsPath (recursive scan, read-only, in-memory cache)
+ * - **Sessions:** config.survey.responsesPath/{tenantId}/{sessionId}.json (direct filesystem R/W)
+ *
+ * Why not use StorageService?
+ * - Needs recursive directory scanning for survey discovery
+ * - Requires directory-level filtering for exports (scan all sessions for a survey)
+ * - CSV export generation directly from session files
+ * - Domain-specific file structure with typed schemas (SurveyDefinition, ParticipantSession)
+ *
+ * Generic StorageService is for arbitrary key-value data with TTL/metadata.
+ * This provider handles structured survey domain models with specialized operations.
  */
 @injectable()
 export class FilesystemSurveyProvider implements ISurveyProvider {
+  /** In-memory cache of survey definitions (loaded at startup) */
   private surveys: Map<string, SurveyDefinition> = new Map();
+  /** Path to survey definition JSON files (read-only, recursive scan) */
   private surveysPath: string;
+  /** Path to session response files (read-write, per-tenant directories) */
   private responsesPath: string;
   private initialized = false;
 
@@ -75,6 +108,8 @@ export class FilesystemSurveyProvider implements ISurveyProvider {
 
   /**
    * Recursively scan directory for survey JSON files.
+   * This is a specialized operation not available in generic StorageService.
+   * Allows organizing surveys in subdirectories (e.g., by category, version).
    */
   private async loadSurveysRecursive(dirPath: string): Promise<void> {
     try {
@@ -229,6 +264,9 @@ export class FilesystemSurveyProvider implements ISurveyProvider {
 
   /**
    * Get all sessions for a survey (with optional filters).
+   * Scans tenant directory and filters by survey ID, status, date range, etc.
+   * This directory-level scanning with in-memory filtering is domain-specific
+   * and not suited to generic StorageService's key-based access pattern.
    */
   async getSessionsBySurvey(
     surveyId: string,
@@ -298,6 +336,9 @@ export class FilesystemSurveyProvider implements ISurveyProvider {
 
   /**
    * Export survey results in the specified format.
+   * Builds CSV with dynamic columns based on survey questions.
+   * This domain-specific export logic (CSV generation, question mapping)
+   * is why we need direct access to session files rather than generic storage.
    */
   async exportResults(
     surveyId: string,
@@ -320,7 +361,7 @@ export class FilesystemSurveyProvider implements ISurveyProvider {
       };
     }
 
-    // CSV export
+    // CSV export (domain-specific formatting with question-based columns)
     if (sessions.length === 0) {
       return {
         data: 'sessionId,surveyId,participantId,status,startedAt,completedAt',
@@ -384,6 +425,102 @@ export class FilesystemSurveyProvider implements ISurveyProvider {
     return {
       data: csv,
       recordCount: sessions.length,
+    };
+  }
+
+  /**
+   * Get analytics summary for a survey.
+   */
+  async getAnalytics(
+    surveyId: string,
+    tenantId: string,
+  ): Promise<{
+    totalSessions: number;
+    completedSessions: number;
+    inProgressSessions: number;
+    abandonedSessions: number;
+    averageCompletionTime?: string;
+    questionStats: Array<{
+      questionId: string;
+      responseCount: number;
+      responseDistribution?: Record<string, number>;
+    }>;
+  }> {
+    this.ensureInitialized();
+
+    const sessions = await this.getSessionsBySurvey(surveyId, tenantId);
+    const survey = await this.getSurveyById(surveyId, tenantId);
+
+    if (!survey) {
+      throw new McpError(
+        JsonRpcErrorCode.NotFound,
+        `Survey not found: ${surveyId}`,
+      );
+    }
+
+    // Calculate session stats
+    const totalSessions = sessions.length;
+    const completedSessions = sessions.filter(
+      (s) => s.status === 'completed',
+    ).length;
+    const inProgressSessions = sessions.filter(
+      (s) => s.status === 'in-progress',
+    ).length;
+    const abandonedSessions = sessions.filter(
+      (s) => s.status === 'abandoned',
+    ).length;
+
+    // Calculate average completion time
+    const completed = sessions.filter((s) => s.status === 'completed');
+    let averageCompletionTime: string | undefined;
+    if (completed.length > 0) {
+      const totalMs = completed.reduce((sum, session) => {
+        if (session.completedAt) {
+          const start = new Date(session.startedAt).getTime();
+          const end = new Date(session.completedAt).getTime();
+          return sum + (end - start);
+        }
+        return sum;
+      }, 0);
+      const avgMinutes = Math.round(totalMs / completed.length / 60000);
+      averageCompletionTime = `${avgMinutes} minutes`;
+    }
+
+    // Calculate question stats
+    const questionStats = survey.questions.map((question) => {
+      const responses = sessions
+        .map((s) => s.responses[question.id])
+        .filter((r) => r !== undefined);
+
+      const responseCount = responses.length;
+
+      // For multiple-choice questions, calculate distribution
+      let responseDistribution: Record<string, number> | undefined;
+      if (
+        question.type === 'multiple-choice' ||
+        question.type === 'rating-scale'
+      ) {
+        responseDistribution = {};
+        for (const response of responses) {
+          const value = String(response.value);
+          responseDistribution[value] = (responseDistribution[value] || 0) + 1;
+        }
+      }
+
+      return {
+        questionId: question.id,
+        responseCount,
+        ...(responseDistribution && { responseDistribution }),
+      };
+    });
+
+    return {
+      totalSessions,
+      completedSessions,
+      inProgressSessions,
+      abandonedSessions,
+      ...(averageCompletionTime && { averageCompletionTime }),
+      questionStats,
     };
   }
 

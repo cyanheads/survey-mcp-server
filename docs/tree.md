@@ -1,6 +1,6 @@
 # survey-mcp-server - Directory Structure
 
-Generated on: 2025-10-05 09:56:53
+Generated on: 2025-10-05 11:04:42
 
 ```
 survey-mcp-server
@@ -179,13 +179,15 @@ survey-mcp-server
 │   │   └── index.ts
 │   ├── index.ts
 │   └── worker.ts
-├── surveys
-│   ├── customer-feedback
-│   │   └── satisfaction
-│   │       └── q1-2025.json
+├── survey-definitions
+│   ├── employee
+│   │   └── onboarding-2025.json
+│   └── product
+│       └── feedback
+│           └── comprehensive-2025.json
+├── survey-responses
 │   └── default-tenant
-│       ├── sess_UJIFP3.json
-│       └── sess_UYY7CB.json
+│       └── sess_ZPQ1HY.json
 ├── tests
 │   ├── config
 │   │   └── index.int.test.ts

@@ -5,7 +5,7 @@
 
 <div align="center">
 
-[![Version](https://img.shields.io/badge/Version-1.0.1-blue.svg?style=flat-square)](./CHANGELOG.md) [![MCP Spec](https://img.shields.io/badge/MCP%20Spec-2025--06--18-8A2BE2.svg?style=flat-square)](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/docs/specification/2025-06-18/changelog.mdx) [![MCP SDK](https://img.shields.io/badge/MCP%20SDK-^1.18.2-green.svg?style=flat-square)](https://modelcontextprotocol.io/) [![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg?style=flat-square)](./LICENSE) [![Status](https://img.shields.io/badge/Status-In%20Development-yellow.svg?style=flat-square)](https://github.com/cyanheads/survey-mcp-server/issues) [![TypeScript](https://img.shields.io/badge/TypeScript-^5.9.3-3178C6.svg?style=flat-square)](https://www.typescriptlang.org/) [![Bun](https://img.shields.io/badge/Bun-v1.2.23-blueviolet.svg?style=flat-square)](https://bun.sh/)
+[![Version](https://img.shields.io/badge/Version-1.0.3-blue.svg?style=flat-square)](./CHANGELOG.md) [![MCP Spec](https://img.shields.io/badge/MCP%20Spec-2025--06--18-8A2BE2.svg?style=flat-square)](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/docs/specification/2025-06-18/changelog.mdx) [![MCP SDK](https://img.shields.io/badge/MCP%20SDK-^1.18.2-green.svg?style=flat-square)](https://modelcontextprotocol.io/) [![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg?style=flat-square)](./LICENSE) [![Status](https://img.shields.io/badge/Status-In%20Development-yellow.svg?style=flat-square)](https://github.com/cyanheads/survey-mcp-server/issues) [![TypeScript](https://img.shields.io/badge/TypeScript-^5.9.3-3178C6.svg?style=flat-square)](https://www.typescriptlang.org/) [![Bun](https://img.shields.io/badge/Bun-v1.2.23-blueviolet.svg?style=flat-square)](https://bun.sh/)
 
 </div>
 
@@ -200,11 +200,12 @@ Plus, specialized features for **Survey Management**:
 
 - **LLM-Driven Surveys**: Tools provide rich context (progress, next suggested questions, validation results) to guide natural conversation flow.
 - **Hybrid Flow Control**: Guided mode with 3-5 suggested questions + flexible ordering based on conversation context.
-- **Conditional Logic**: Skip logic and branching based on previous answers with real-time eligibility updates.
+- **Advanced Conditional Logic**: Support for simple skip logic and complex `AND`/`OR` multi-condition branching.
 - **JSON-Based Survey Definitions**: Define surveys in simple JSON files with recursive directory scanning.
-- **Multiple Question Types**: Free-form text, multiple choice, rating scales, email, number, and boolean questions.
-- **Validation Engine**: Min/max length, patterns, required fields, and custom constraints.
+- **Multiple Question Types**: `free-form`, `multiple-choice`, `multiple-select`, `rating-scale`, `email`, `number`, `boolean`, and advanced types like `date`, `datetime`, `time`, and `matrix` grids.
+- **Validation Engine**: Min/max length, patterns, required fields, custom constraints, and date/time rules.
 - **Session Resume**: Built-in state management allows participants to pause and continue later.
+- **Help Text**: A `helpText` field on questions provides LLMs with context and guidance for asking questions naturally.
 
 ## 🚀 Getting Started
 
@@ -217,11 +218,11 @@ Add the following to your MCP Client configuration file (e.g., `cline_mcp_settin
   "mcpServers": {
     "survey-mcp-server": {
       "command": "bunx",
-      "args": ["survey-mcp-server@latest"],
+      "args": ["@cyanheads/survey-mcp-server@latest"],
       "env": {
         "MCP_LOG_LEVEL": "info",
-        "SURVEY_DEFINITIONS_PATH": "./surveys",
-        "SURVEY_RESPONSES_PATH": "./storage/responses"
+        "SURVEY_DEFINITIONS_PATH": "./survey-definitions",
+        "SURVEY_RESPONSES_PATH": "./survey-responses"
       }
     }
   }
@@ -252,13 +253,8 @@ cd survey-mcp-server
 bun install
 ```
 
-4.  **Create example surveys:**
-
-```sh
-mkdir -p surveys/examples
-# Add your survey JSON files to surveys/examples/
-# See docs/survey-mcp-server-spec.md for schema details
-```
+4.  **Explore example surveys:**
+    The `survey-definitions/` directory contains example JSON files demonstrating various question types and features. Use these as a starting point for creating your own surveys.
 
 ## 🛠️ Core Capabilities: Survey Tools
 
@@ -294,18 +290,18 @@ This server equips AI agents with specialized tools to conduct dynamic, conversa
 
 All configuration is centralized and validated at startup in `src/config/index.ts`. Key environment variables in your `.env` file include:
 
-| Variable                  | Description                                                                    | Default               |
-| :------------------------ | :----------------------------------------------------------------------------- | :-------------------- |
-| `SURVEY_DEFINITIONS_PATH` | Path to directory containing survey JSON files (recursive scan).               | `./surveys`           |
-| `SURVEY_RESPONSES_PATH`   | Path to directory for storing session responses (filesystem mode).             | `./storage/responses` |
-| `MCP_TRANSPORT_TYPE`      | The transport to use: `stdio` or `http`.                                       | `http`                |
-| `MCP_HTTP_PORT`           | The port for the HTTP server.                                                  | `3019`                |
-| `MCP_AUTH_MODE`           | Authentication mode: `none`, `jwt`, or `oauth`.                                | `none`                |
-| `STORAGE_PROVIDER_TYPE`   | Storage backend: `in-memory`, `filesystem`, `supabase`, `cloudflare-kv`, `r2`. | `in-memory`           |
-| `OTEL_ENABLED`            | Set to `true` to enable OpenTelemetry.                                         | `false`               |
-| `LOG_LEVEL`               | The minimum level for logging (`debug`, `info`, `warn`, `error`).              | `info`                |
-| `MCP_AUTH_SECRET_KEY`     | **Required for `jwt` auth.** A 32+ character secret key.                       | `(none)`              |
-| `OAUTH_ISSUER_URL`        | **Required for `oauth` auth.** URL of the OIDC provider.                       | `(none)`              |
+| Variable                  | Description                                                                    | Default                  |
+| :------------------------ | :----------------------------------------------------------------------------- | :----------------------- |
+| `SURVEY_DEFINITIONS_PATH` | Path to directory containing survey JSON files (recursive scan).               | `./survey-definitions`   |
+| `SURVEY_RESPONSES_PATH`   | Path to directory for storing session responses (filesystem mode).             | `./survey-responses`     |
+| `MCP_TRANSPORT_TYPE`      | The transport to use: `stdio` or `http`.                                       | `http`                   |
+| `MCP_HTTP_PORT`           | The port for the HTTP server.                                                  | `3019`                   |
+| `MCP_AUTH_MODE`           | Authentication mode: `none`, `jwt`, or `oauth`.                                | `none`                   |
+| `STORAGE_PROVIDER_TYPE`   | Storage backend: `in-memory`, `filesystem`, `supabase`, `cloudflare-kv`, `r2`. | `in-memory`              |
+| `OTEL_ENABLED`            | Set to `true` to enable OpenTelemetry.                                         | `false`                  |
+| `LOG_LEVEL`               | The minimum level for logging (`debug`, `info`, `warn`, `error`).              | `info`                   |
+| `MCP_AUTH_SECRET_KEY`     | **Required for `jwt` auth.** A 32+ character secret key.                       | `(none)`                 |
+| `OAUTH_ISSUER_URL`        | **Required for `oauth` auth.** URL of the OIDC provider.                       | `(none)`                 |
 
 ## ▶️ Running the Server
 
@@ -352,8 +348,8 @@ bun deploy:dev
 
 | Directory                   | Purpose & Contents                                                                  |
 | :-------------------------- | :---------------------------------------------------------------------------------- |
-| `surveys/`                  | **Survey definitions** (JSON files). Nested directories supported for organization. |
-| `storage/responses/`        | **Session responses** (when using filesystem storage). Organized by tenant ID.      |
+| `survey-definitions/`       | **Survey definitions** (JSON files). Nested directories supported for organization. |
+| `survey-responses/`         | **Session responses** (when using `filesystem` provider). Organized by tenant ID.   |
 | `src/mcp-server/tools`      | **Survey tool definitions** (`survey-*.tool.ts`). 8 tools for complete lifecycle.   |
 | `src/mcp-server/resources`  | Resource definitions for survey metadata and discovery.                             |
 | `src/services/survey/`      | Survey service with filesystem provider for loading definitions.                    |

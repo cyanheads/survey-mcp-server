@@ -1,0 +1,295 @@
+{
+  "id": "employee-onboarding-2025",
+  "version": "1.0",
+  "metadata": {
+    "title": "Employee Onboarding Survey 2025",
+    "description": "Comprehensive onboarding assessment featuring advanced question types (date/time, matrix grids), multi-condition branching logic, and contextual help text. Captures employee information, role details, office preferences, and onboarding experience feedback.",
+    "estimatedDuration": "10-15 minutes",
+    "tags": ["onboarding", "employee", "2025", "advanced-features"]
+  },
+  "questions": [
+    {
+      "id": "name",
+      "type": "free-form",
+      "text": "What's the employee's full name?",
+      "helpText": "Get their legal first and last name as it appears on official documents.",
+      "required": true,
+      "validation": {
+        "minLength": 2,
+        "maxLength": 100,
+        "customErrorMessage": "Name should be between 2-100 characters."
+      }
+    },
+    {
+      "id": "email",
+      "type": "email",
+      "text": "What's their work email address?",
+      "helpText": "Their company email for official communications.",
+      "required": true
+    },
+    {
+      "id": "start_date",
+      "type": "date",
+      "text": "When did they officially start?",
+      "helpText": "The estimated date they began working at the company.",
+      "required": true,
+      "validation": {
+        "dateTime": {
+          "allowFuture": false,
+          "allowWeekends": true,
+          "maxDate": "2025-12-31"
+        }
+      }
+    },
+    {
+      "id": "department",
+      "type": "multiple-choice",
+      "text": "Which department are they joining?",
+      "required": true,
+      "options": [
+        { "value": "engineering", "label": "Engineering" },
+        { "value": "product", "label": "Product Management" },
+        { "value": "design", "label": "Design" },
+        { "value": "marketing", "label": "Marketing" },
+        { "value": "sales", "label": "Sales" },
+        { "value": "support", "label": "Customer Support" },
+        { "value": "hr", "label": "Human Resources" },
+        { "value": "finance", "label": "Finance" },
+        { "value": "operations", "label": "Operations" }
+      ]
+    },
+    {
+      "id": "role_type",
+      "type": "multiple-choice",
+      "text": "What type of role is this?",
+      "required": true,
+      "options": [
+        {
+          "value": "individual-contributor",
+          "label": "Individual Contributor"
+        },
+        { "value": "team-lead", "label": "Team Lead" },
+        { "value": "manager", "label": "Manager" },
+        { "value": "director", "label": "Director" },
+        { "value": "executive", "label": "Executive" }
+      ]
+    },
+    {
+      "id": "technical_role_details",
+      "type": "multiple-choice",
+      "text": "What's their specific technical role?",
+      "helpText": "The option that best matches their primary responsibilities.",
+      "required": false,
+      "conditional": {
+        "dependsOn": "department",
+        "showIf": ["engineering", "product", "design"]
+      },
+      "options": [
+        { "value": "frontend", "label": "Frontend Engineer" },
+        { "value": "backend", "label": "Backend Engineer" },
+        { "value": "fullstack", "label": "Full-Stack Engineer" },
+        { "value": "mobile", "label": "Mobile Engineer" },
+        { "value": "devops", "label": "DevOps/SRE" },
+        { "value": "data", "label": "Data Engineer" },
+        { "value": "ml", "label": "ML/AI Engineer" },
+        { "value": "product-manager", "label": "Product Manager" },
+        { "value": "designer", "label": "UX/UI Designer" },
+        { "value": "researcher", "label": "UX Researcher" }
+      ]
+    },
+    {
+      "id": "management_responsibilities",
+      "type": "boolean",
+      "text": "Will they have direct reports?",
+      "required": true,
+      "conditional": {
+        "operator": "OR",
+        "conditions": [
+          { "dependsOn": "role_type", "showIf": ["team-lead"] },
+          { "dependsOn": "role_type", "showIf": ["manager"] },
+          { "dependsOn": "role_type", "showIf": ["director"] }
+        ]
+      }
+    },
+    {
+      "id": "team_size",
+      "type": "number",
+      "text": "How many people will report to them?",
+      "helpText": "The number of direct reports they'll manage.",
+      "required": true,
+      "conditional": {
+        "dependsOn": "management_responsibilities",
+        "showIf": [true]
+      },
+      "validation": {
+        "integer": true,
+        "min": 1,
+        "max": 50
+      }
+    },
+    {
+      "id": "office_location",
+      "type": "multiple-choice",
+      "text": "Where will they primarily work from?",
+      "required": true,
+      "options": [
+        { "value": "sf", "label": "San Francisco, CA" },
+        { "value": "nyc", "label": "New York, NY" },
+        { "value": "austin", "label": "Austin, TX" },
+        { "value": "london", "label": "London, UK" },
+        { "value": "berlin", "label": "Berlin, Germany" },
+        { "value": "remote", "label": "Remote" }
+      ]
+    },
+    {
+      "id": "in_office_days",
+      "type": "multiple-select",
+      "text": "Which days will they typically be in the office?",
+      "helpText": "Helps with planning office capacity and scheduling.",
+      "required": false,
+      "conditional": {
+        "dependsOn": "office_location",
+        "showIf": ["sf", "nyc", "austin", "london", "berlin"]
+      },
+      "options": [
+        { "value": "monday", "label": "Monday" },
+        { "value": "tuesday", "label": "Tuesday" },
+        { "value": "wednesday", "label": "Wednesday" },
+        { "value": "thursday", "label": "Thursday" },
+        { "value": "friday", "label": "Friday" }
+      ],
+      "validation": {
+        "minSelections": 1,
+        "maxSelections": 5
+      }
+    },
+    {
+      "id": "onboarding_experience",
+      "type": "matrix",
+      "text": "How would they rate their onboarding experience so far?",
+      "helpText": "For each aspect, ask them to rate from Poor to Excellent. You can ask about them all at once or discuss each individually in conversation - whatever feels more natural.",
+      "required": true,
+      "matrix": {
+        "rows": [
+          { "id": "documentation", "label": "Documentation & Resources" },
+          { "id": "equipment", "label": "Equipment Setup" },
+          { "id": "team_introduction", "label": "Team Introductions" },
+          { "id": "training", "label": "Training Sessions" },
+          { "id": "hr_support", "label": "HR Support" }
+        ],
+        "columns": [
+          { "value": "poor", "label": "Poor" },
+          { "value": "fair", "label": "Fair" },
+          { "value": "good", "label": "Good" },
+          { "value": "very-good", "label": "Very Good" },
+          { "value": "excellent", "label": "Excellent" }
+        ],
+        "allowMultiplePerRow": false
+      }
+    },
+    {
+      "id": "satisfaction",
+      "type": "rating-scale",
+      "text": "How satisfied are they with their decision to join?",
+      "helpText": "On a scale of 0 (not satisfied) to 10 (extremely satisfied).",
+      "required": true,
+      "scale": { "min": 0, "max": 10, "step": 1 }
+    },
+    {
+      "id": "concerns",
+      "type": "free-form",
+      "text": "Do they have any concerns or challenges they'd like to discuss?",
+      "helpText": "This is confidential. Encourage them to share any challenges, worries, or areas where they need support. Probe gently if they seem hesitant - this feedback helps improve the onboarding process.",
+      "required": false,
+      "conditional": {
+        "dependsOn": "satisfaction",
+        "showIf": [0, 1, 2, 3, 4, 5, 6]
+      },
+      "validation": {
+        "minLength": 10,
+        "maxLength": 1000
+      }
+    },
+    {
+      "id": "first_1on1_preference",
+      "type": "datetime",
+      "text": "When would they prefer their first 1:1 with their manager?",
+      "helpText": "A date and time that works for them (in their local timezone).",
+      "required": true,
+      "validation": {
+        "dateTime": {
+          "allowPast": false,
+          "allowWeekends": false,
+          "minDate": "2025-01-06"
+        }
+      }
+    },
+    {
+      "id": "preferred_1on1_time",
+      "type": "time",
+      "text": "What time of day do they generally prefer for 1:1 meetings?",
+      "helpText": "Helps schedule recurring 1:1s at times that work well for them.",
+      "required": false
+    },
+    {
+      "id": "training_topics",
+      "type": "multiple-select",
+      "text": "Which training areas would be most valuable for them?",
+      "helpText": "Based on your conversation about their role and experience, suggest relevant training areas they might benefit from. They can select multiple options.",
+      "required": false,
+      "options": [
+        { "value": "technical-tools", "label": "Technical Tools & Platforms" },
+        { "value": "product-knowledge", "label": "Product Knowledge" },
+        { "value": "company-culture", "label": "Company Culture & Values" },
+        { "value": "leadership", "label": "Leadership & Management" },
+        { "value": "communication", "label": "Communication Skills" },
+        { "value": "process", "label": "Internal Processes & Workflows" },
+        { "value": "industry", "label": "Industry Knowledge" }
+      ],
+      "validation": {
+        "maxSelections": 5
+      }
+    },
+    {
+      "id": "buddy_program",
+      "type": "boolean",
+      "text": "Would they like to be matched with an onboarding buddy?",
+      "helpText": "A peer who can help them navigate their first few months.",
+      "required": true
+    },
+    {
+      "id": "buddy_preferences",
+      "type": "multiple-select",
+      "text": "What would they value in an onboarding buddy?",
+      "required": false,
+      "conditional": {
+        "dependsOn": "buddy_program",
+        "showIf": [true]
+      },
+      "options": [
+        { "value": "same-department", "label": "Same department" },
+        { "value": "different-department", "label": "Different department" },
+        { "value": "similar-role", "label": "Similar role/level" },
+        { "value": "senior-mentor", "label": "Senior mentor" },
+        { "value": "same-location", "label": "Same office location" },
+        { "value": "remote-friendly", "label": "Experienced with remote work" }
+      ]
+    },
+    {
+      "id": "additional_feedback",
+      "type": "free-form",
+      "text": "Anything else they'd like to share?",
+      "helpText": "Additional feedback not covered in the survey. Include details or suggestions the user has conveyed during your interactions. You may also explicitly ask for suggestions on improvements, questions they have, or other comments they wish to provide.",
+      "required": false,
+      "validation": {
+        "maxLength": 2000
+      }
+    }
+  ],
+  "settings": {
+    "allowSkip": true,
+    "allowResume": true,
+    "shuffleQuestions": false,
+    "maxAttempts": 3
+  }
+}

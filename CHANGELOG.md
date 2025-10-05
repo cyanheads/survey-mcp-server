@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.3] - 2025-10-05
+
+### Added
+
+- **Advanced Question Types**: Introduced support for new, highly-requested question formats:
+  - `date`, `datetime`, `time`: For capturing temporal data with ISO 8601 validation.
+  - `matrix`: For creating complex grid/table questions with rows and columns.
+- **Advanced Validation Rules**: Added a rich set of validation constraints for new question types:
+  - **Date/Time**: `minDate`, `maxDate`, `allowPast`, `allowFuture`, `allowWeekends`, and `excludedDates`.
+  - **Matrix**: Validation for required rows and correct column selections (single or multiple).
+- **Multi-Condition Logic**: Upgraded conditional branching to support complex `AND`/`OR` logic between multiple conditions, allowing for more sophisticated survey flows.
+- **Survey Analytics**: Implemented the core service-layer for survey analytics (`SurveyService.getAnalytics`), including a `FilesystemSurveyProvider` implementation to calculate session stats, completion rates, and response distributions.
+- **Help Text**: Added a `helpText` field to question definitions to provide contextual guidance to the LLM/interviewer.
+- **New Survey Examples**: Included two new comprehensive survey definitions (`employee-onboarding-2025.json`, `product-feedback-comprehensive.json`) to demonstrate all new features.
+
+### Changed
+
+- **Directory Structure**: Refactored survey data storage for better organization and clarity:
+  - Renamed `surveys/` to `survey-definitions/` for storing survey schemas.
+  - Created a new top-level `survey-responses/` directory for participant session data.
+  - Updated `.env.example` and default configurations to reflect the new paths.
+- **Codebase Documentation**: Added extensive JSDoc and architecture notes to `filesystem.provider.ts` to clarify its domain-specific purpose and distinction from the generic `StorageService`.
+
+### Removed
+
+- **Old Survey Data**: Removed outdated survey definition and session files from the old `surveys/` directory.
+
+### Fixed
+
+- **Readability**: Removed unnecessary truncation of survey descriptions in the `survey_list_available` tool output.
+- **Conditional Logic Display**: The `survey_get_question` tool now correctly displays complex multi-condition logic.
+
 ## [1.0.2] - 2025-10-05
 
 ### Changed

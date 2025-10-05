@@ -11,6 +11,7 @@ import { JsonRpcErrorCode, McpError } from '@/types-global/errors.js';
 import { logger } from '@/utils/index.js';
 import { idGenerator } from '@/utils/security/idGenerator.js';
 import type {
+  ConditionalLogic,
   EligibilityChange,
   EnrichedQuestion,
   ExportFilters,
@@ -516,6 +517,74 @@ export class SurveyService {
   }
 
   /**
+   * Get survey analytics summary.
+   */
+  async getAnalytics(
+    surveyId: string,
+    tenantId: string,
+  ): Promise<{
+    totalSessions: number;
+    completedSessions: number;
+    inProgressSessions: number;
+    abandonedSessions: number;
+    completionRate: string;
+    averageCompletionTime?: string;
+    questionStats: Array<{
+      questionId: string;
+      questionText: string;
+      responseCount: number;
+      responseRate: string;
+      responseDistribution?: Record<string, number>;
+    }>;
+  }> {
+    // Check if provider supports analytics
+    if (!this.provider.getAnalytics) {
+      throw new McpError(
+        JsonRpcErrorCode.InternalError,
+        'Analytics not supported by current provider',
+      );
+    }
+
+    const survey = await this.getSurveyOrThrow(surveyId, tenantId);
+    const analyticsData = await this.provider.getAnalytics(surveyId, tenantId);
+
+    // Calculate completion rate
+    const completionRate =
+      analyticsData.totalSessions > 0
+        ? `${Math.round((analyticsData.completedSessions / analyticsData.totalSessions) * 100)}%`
+        : '0%';
+
+    // Enrich question stats with question text and response rates
+    const enrichedQuestionStats = analyticsData.questionStats.map((stat) => {
+      const question = survey.questions.find((q) => q.id === stat.questionId);
+      const responseRate =
+        analyticsData.totalSessions > 0
+          ? `${Math.round((stat.responseCount / analyticsData.totalSessions) * 100)}%`
+          : '0%';
+
+      return {
+        ...stat,
+        questionText: question?.text || 'Unknown question',
+        responseRate,
+      };
+    });
+
+    logger.info('Generated survey analytics');
+
+    return {
+      totalSessions: analyticsData.totalSessions,
+      completedSessions: analyticsData.completedSessions,
+      inProgressSessions: analyticsData.inProgressSessions,
+      abandonedSessions: analyticsData.abandonedSessions,
+      completionRate,
+      ...(analyticsData.averageCompletionTime && {
+        averageCompletionTime: analyticsData.averageCompletionTime,
+      }),
+      questionStats: enrichedQuestionStats,
+    };
+  }
+
+  /**
    * Health check.
    */
   async healthCheck(): Promise<boolean> {
@@ -536,29 +605,12 @@ export class SurveyService {
 
       // Check conditional logic
       if (question.conditional) {
-        const { dependsOn, showIf } = question.conditional;
-        const dependencyResponse = session.responses[dependsOn];
-
-        if (!dependencyResponse) {
-          currentlyEligible = false;
-          eligibilityReason = `Conditional: depends on unanswered question ${dependsOn}`;
-        } else {
-          const responseValue = dependencyResponse.value;
-          const matchesCondition = showIf.some((val) => val === responseValue);
-
-          if (!matchesCondition) {
-            currentlyEligible = false;
-            eligibilityReason = `Conditional: ${dependsOn} answer does not match required values`;
-          } else {
-            currentlyEligible = true;
-            // Handle different types for template literal
-            const valueStr =
-              typeof responseValue === 'object' && responseValue !== null
-                ? JSON.stringify(responseValue)
-                : String(responseValue);
-            eligibilityReason = `Conditional logic satisfied (${dependsOn} = '${valueStr}')`;
-          }
-        }
+        const conditionalResult = this.evaluateConditionalLogic(
+          question.conditional,
+          session,
+        );
+        currentlyEligible = conditionalResult.eligible;
+        eligibilityReason = conditionalResult.reason;
       }
 
       return {
@@ -568,6 +620,107 @@ export class SurveyService {
         alreadyAnswered,
       };
     });
+  }
+
+  /**
+   * Evaluate conditional logic (supports both simple and multi-condition).
+   */
+  private evaluateConditionalLogic(
+    conditional: ConditionalLogic,
+    session: ParticipantSession,
+  ): { eligible: boolean; reason: string } {
+    // Check if it's a simple single condition
+    if ('dependsOn' in conditional && 'showIf' in conditional) {
+      return this.evaluateSingleCondition(conditional, session);
+    }
+
+    // Multi-condition logic
+    if ('operator' in conditional && 'conditions' in conditional) {
+      const { operator, conditions } = conditional;
+      const results = conditions.map(
+        (cond: { dependsOn: string; showIf: (string | number | boolean)[] }) =>
+          this.evaluateSingleCondition(cond, session),
+      );
+
+      if (operator === 'AND') {
+        // All conditions must be eligible
+        const allEligible = results.every(
+          (r: { eligible: boolean; reason: string }) => r.eligible,
+        );
+        if (allEligible) {
+          return {
+            eligible: true,
+            reason: `All ${conditions.length} conditions satisfied (AND)`,
+          };
+        }
+        const failedReasons = results
+          .filter((r: { eligible: boolean; reason: string }) => !r.eligible)
+          .map((r: { eligible: boolean; reason: string }) => r.reason);
+        return {
+          eligible: false,
+          reason: `AND condition failed: ${failedReasons.join('; ')}`,
+        };
+      } else {
+        // OR: At least one condition must be eligible
+        const anyEligible = results.some(
+          (r: { eligible: boolean; reason: string }) => r.eligible,
+        );
+        if (anyEligible) {
+          const satisfiedReasons = results
+            .filter((r: { eligible: boolean; reason: string }) => r.eligible)
+            .map((r: { eligible: boolean; reason: string }) => r.reason);
+          return {
+            eligible: true,
+            reason: `OR condition satisfied: ${satisfiedReasons[0] ?? 'unknown'}`,
+          };
+        }
+        return {
+          eligible: false,
+          reason: `OR condition failed: all ${conditions.length} conditions not met`,
+        };
+      }
+    }
+
+    // Fallback (should not happen with proper types)
+    return { eligible: true, reason: 'Unknown conditional logic format' };
+  }
+
+  /**
+   * Evaluate a single condition.
+   */
+  private evaluateSingleCondition(
+    condition: { dependsOn: string; showIf: (string | number | boolean)[] },
+    session: ParticipantSession,
+  ): { eligible: boolean; reason: string } {
+    const { dependsOn, showIf } = condition;
+    const dependencyResponse = session.responses[dependsOn];
+
+    if (!dependencyResponse) {
+      return {
+        eligible: false,
+        reason: `Conditional: depends on unanswered question ${dependsOn}`,
+      };
+    }
+
+    const responseValue = dependencyResponse.value;
+    const matchesCondition = showIf.some((val) => val === responseValue);
+
+    if (!matchesCondition) {
+      return {
+        eligible: false,
+        reason: `Conditional: ${dependsOn} answer does not match required values`,
+      };
+    }
+
+    // Handle different types for template literal
+    const valueStr =
+      typeof responseValue === 'object' && responseValue !== null
+        ? JSON.stringify(responseValue)
+        : String(responseValue);
+    return {
+      eligible: true,
+      reason: `Conditional logic satisfied (${dependsOn} = '${valueStr}')`,
+    };
   }
 
   /**

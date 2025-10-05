@@ -69,6 +69,18 @@ export function validateResponse(
     case 'boolean':
       validateBoolean(question, value, errors);
       break;
+    case 'date':
+      validateDate(question, value, errors);
+      break;
+    case 'datetime':
+      validateDateTime(question, value, errors);
+      break;
+    case 'time':
+      validateTime(question, value, errors);
+      break;
+    case 'matrix':
+      validateMatrix(question, value, errors);
+      break;
   }
 
   return { valid: errors.length === 0, errors };
@@ -419,5 +431,331 @@ function validateBoolean(
       expected: 'boolean',
       actual: typeof value,
     });
+  }
+}
+
+/**
+ * Validate date response (ISO 8601 date string: YYYY-MM-DD).
+ */
+function validateDate(
+  question: QuestionDefinition,
+  value: unknown,
+  errors: ValidationError[],
+): void {
+  if (typeof value !== 'string') {
+    errors.push({
+      field: 'value',
+      message: 'Date response must be a string in ISO 8601 format (YYYY-MM-DD)',
+      constraint: 'type',
+      expected: 'string',
+      actual: typeof value,
+    });
+    return;
+  }
+
+  // Validate ISO 8601 date format (YYYY-MM-DD)
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dateRegex.test(value)) {
+    errors.push({
+      field: 'value',
+      message:
+        'Date must be in ISO 8601 format (YYYY-MM-DD), e.g., "2025-01-15"',
+      constraint: 'pattern',
+      expected: 'YYYY-MM-DD',
+      actual: value,
+    });
+    return;
+  }
+
+  // Parse and validate as valid date
+  const date = new Date(value);
+  if (isNaN(date.getTime())) {
+    errors.push({
+      field: 'value',
+      message: 'Invalid date value',
+      constraint: 'pattern',
+      actual: value,
+    });
+    return;
+  }
+
+  // Apply date-specific validations
+  const dateTimeRules = question.validation?.dateTime;
+  if (dateTimeRules) {
+    validateDateTimeRules(date, value, dateTimeRules, errors);
+  }
+}
+
+/**
+ * Validate datetime response (ISO 8601 datetime string).
+ */
+function validateDateTime(
+  question: QuestionDefinition,
+  value: unknown,
+  errors: ValidationError[],
+): void {
+  if (typeof value !== 'string') {
+    errors.push({
+      field: 'value',
+      message:
+        'DateTime response must be a string in ISO 8601 format (e.g., "2025-01-15T14:30:00Z")',
+      constraint: 'type',
+      expected: 'string',
+      actual: typeof value,
+    });
+    return;
+  }
+
+  // Parse and validate as valid datetime
+  const date = new Date(value);
+  if (isNaN(date.getTime())) {
+    errors.push({
+      field: 'value',
+      message:
+        'Invalid datetime value. Must be ISO 8601 format (e.g., "2025-01-15T14:30:00Z")',
+      constraint: 'pattern',
+      actual: value,
+    });
+    return;
+  }
+
+  // Apply date-specific validations
+  const dateTimeRules = question.validation?.dateTime;
+  if (dateTimeRules) {
+    validateDateTimeRules(date, value, dateTimeRules, errors);
+  }
+}
+
+/**
+ * Validate time response (ISO 8601 time string: HH:MM or HH:MM:SS).
+ */
+function validateTime(
+  _question: QuestionDefinition,
+  value: unknown,
+  errors: ValidationError[],
+): void {
+  if (typeof value !== 'string') {
+    errors.push({
+      field: 'value',
+      message: 'Time response must be a string in format HH:MM or HH:MM:SS',
+      constraint: 'type',
+      expected: 'string',
+      actual: typeof value,
+    });
+    return;
+  }
+
+  // Validate time format (HH:MM or HH:MM:SS)
+  const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)(:[0-5]\d)?$/;
+  if (!timeRegex.test(value)) {
+    errors.push({
+      field: 'value',
+      message:
+        'Time must be in format HH:MM or HH:MM:SS (24-hour format), e.g., "14:30" or "14:30:00"',
+      constraint: 'pattern',
+      expected: 'HH:MM or HH:MM:SS',
+      actual: value,
+    });
+  }
+}
+
+/**
+ * Validate matrix question response.
+ * Expected format: { [rowId]: string | string[] }
+ */
+function validateMatrix(
+  question: QuestionDefinition,
+  value: unknown,
+  errors: ValidationError[],
+): void {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    errors.push({
+      field: 'value',
+      message:
+        'Matrix response must be an object mapping row IDs to selected column values',
+      constraint: 'type',
+      expected: 'object',
+      actual: Array.isArray(value) ? 'array' : typeof value,
+    });
+    return;
+  }
+
+  if (!question.matrix) {
+    errors.push({
+      field: 'question.matrix',
+      message: 'Matrix question must have matrix configuration defined',
+      constraint: 'definition',
+    });
+    return;
+  }
+
+  const matrixValue = value as Record<string, unknown>;
+  const rowIds = question.matrix.rows.map((row) => row.id);
+  const validColumnValues = question.matrix.columns.map((col) => col.value);
+  const allowMultiple = question.matrix.allowMultiplePerRow;
+
+  // Validate all required rows are present
+  for (const rowId of rowIds) {
+    if (question.required && !(rowId in matrixValue)) {
+      errors.push({
+        field: `value.${rowId}`,
+        message: `Missing response for row: ${rowId}`,
+        constraint: 'required',
+        expected: rowIds,
+      });
+      continue;
+    }
+
+    const rowValue = matrixValue[rowId];
+    if (rowValue === undefined || rowValue === null || rowValue === '') {
+      continue; // Skip validation for empty optional rows
+    }
+
+    // Validate row response format
+    if (allowMultiple) {
+      // Expect array of column values
+      if (!Array.isArray(rowValue)) {
+        errors.push({
+          field: `value.${rowId}`,
+          message: `Row ${rowId} expects an array of column values`,
+          constraint: 'type',
+          expected: 'array',
+          actual: typeof rowValue,
+        });
+        continue;
+      }
+
+      // Validate each selection
+      const invalidSelections = rowValue.filter(
+        (v) => typeof v !== 'string' || !validColumnValues.includes(v),
+      );
+      if (invalidSelections.length > 0) {
+        errors.push({
+          field: `value.${rowId}`,
+          message: `Invalid column selections for row ${rowId}: ${invalidSelections.join(', ')}. Must be from: ${validColumnValues.join(', ')}`,
+          constraint: 'options',
+          expected: validColumnValues,
+          actual: invalidSelections,
+        });
+      }
+    } else {
+      // Expect single column value
+      if (typeof rowValue !== 'string') {
+        errors.push({
+          field: `value.${rowId}`,
+          message: `Row ${rowId} expects a single column value (string)`,
+          constraint: 'type',
+          expected: 'string',
+          actual: typeof rowValue,
+        });
+        continue;
+      }
+
+      if (!validColumnValues.includes(rowValue)) {
+        errors.push({
+          field: `value.${rowId}`,
+          message: `Invalid column selection for row ${rowId}: "${rowValue}". Must be one of: ${validColumnValues.join(', ')}`,
+          constraint: 'options',
+          expected: validColumnValues,
+          actual: rowValue,
+        });
+      }
+    }
+  }
+}
+
+/**
+ * Helper function to validate date/time specific rules.
+ */
+function validateDateTimeRules(
+  date: Date,
+  originalValue: string,
+  rules: {
+    minDate?: string | undefined;
+    maxDate?: string | undefined;
+    allowWeekends?: boolean | undefined;
+    allowPast?: boolean | undefined;
+    allowFuture?: boolean | undefined;
+    excludedDates?: string[] | undefined;
+  },
+  errors: ValidationError[],
+): void {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0); // Compare dates only, ignore time
+  const dateOnly = new Date(date);
+  dateOnly.setHours(0, 0, 0, 0);
+
+  // Check past/future constraints
+  if (rules.allowPast === false && dateOnly < now) {
+    errors.push({
+      field: 'value',
+      message: 'Past dates are not allowed',
+      constraint: 'allowPast',
+      actual: originalValue,
+    });
+  }
+
+  if (rules.allowFuture === false && dateOnly > now) {
+    errors.push({
+      field: 'value',
+      message: 'Future dates are not allowed',
+      constraint: 'allowFuture',
+      actual: originalValue,
+    });
+  }
+
+  // Check min/max date range
+  if (rules.minDate) {
+    const minDate = new Date(rules.minDate);
+    minDate.setHours(0, 0, 0, 0);
+    if (dateOnly < minDate) {
+      errors.push({
+        field: 'value',
+        message: `Date must be on or after ${rules.minDate}`,
+        constraint: 'minDate',
+        expected: rules.minDate,
+        actual: originalValue,
+      });
+    }
+  }
+
+  if (rules.maxDate) {
+    const maxDate = new Date(rules.maxDate);
+    maxDate.setHours(0, 0, 0, 0);
+    if (dateOnly > maxDate) {
+      errors.push({
+        field: 'value',
+        message: `Date must be on or before ${rules.maxDate}`,
+        constraint: 'maxDate',
+        expected: rules.maxDate,
+        actual: originalValue,
+      });
+    }
+  }
+
+  // Check weekend constraint
+  if (rules.allowWeekends === false) {
+    const dayOfWeek = date.getDay();
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      errors.push({
+        field: 'value',
+        message: 'Weekend dates are not allowed',
+        constraint: 'allowWeekends',
+        actual: originalValue,
+      });
+    }
+  }
+
+  // Check excluded dates
+  if (rules.excludedDates && rules.excludedDates.length > 0) {
+    const dateStr = originalValue.split('T')[0]; // Get date part only
+    if (dateStr && rules.excludedDates.includes(dateStr)) {
+      errors.push({
+        field: 'value',
+        message: `This date is excluded: ${dateStr}`,
+        constraint: 'excludedDates',
+        actual: originalValue,
+      });
+    }
   }
 }

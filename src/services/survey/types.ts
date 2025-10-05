@@ -17,6 +17,10 @@ export const QuestionTypeSchema = z.enum([
   'email',
   'number',
   'boolean',
+  'date',
+  'datetime',
+  'time',
+  'matrix',
 ]);
 
 export type QuestionType = z.infer<typeof QuestionTypeSchema>;
@@ -43,14 +47,91 @@ export const RatingScaleSchema = z.object({
 export type RatingScale = z.infer<typeof RatingScaleSchema>;
 
 /**
- * Conditional logic for question display.
+ * Matrix question configuration.
+ * Multiple sub-questions sharing the same set of options.
  */
-export const ConditionalLogicSchema = z.object({
+export const MatrixConfigSchema = z.object({
+  rows: z
+    .array(
+      z.object({
+        id: z.string().describe('Unique identifier for this row'),
+        label: z.string().describe('Row label/question text'),
+      }),
+    )
+    .min(1)
+    .describe('Rows (sub-questions) in the matrix'),
+  columns: z
+    .array(QuestionOptionSchema)
+    .min(2)
+    .describe('Columns (shared options) for all rows'),
+  allowMultiplePerRow: z
+    .boolean()
+    .default(false)
+    .describe('Allow multiple column selections per row'),
+});
+
+export type MatrixConfig = z.infer<typeof MatrixConfigSchema>;
+
+/**
+ * Date/time validation constraints.
+ */
+export const DateTimeValidationSchema = z.object({
+  minDate: z
+    .string()
+    .optional()
+    .describe('Minimum allowed date (ISO 8601 format)'),
+  maxDate: z
+    .string()
+    .optional()
+    .describe('Maximum allowed date (ISO 8601 format)'),
+  allowWeekends: z
+    .boolean()
+    .default(true)
+    .describe('Whether to allow weekend dates'),
+  allowPast: z
+    .boolean()
+    .default(true)
+    .describe('Whether to allow dates in the past'),
+  allowFuture: z
+    .boolean()
+    .default(true)
+    .describe('Whether to allow dates in the future'),
+  excludedDates: z
+    .array(z.string())
+    .optional()
+    .describe('Specific dates to exclude (ISO 8601 format)'),
+});
+
+export type DateTimeValidation = z.infer<typeof DateTimeValidationSchema>;
+
+/**
+ * Single condition for conditional logic.
+ */
+export const SingleConditionSchema = z.object({
   dependsOn: z.string().describe('Question ID this condition depends on'),
   showIf: z
     .array(z.union([z.string(), z.number(), z.boolean()]))
     .describe('Values that trigger this question to be shown'),
 });
+
+/**
+ * Conditional logic for question display.
+ * Supports both simple single-condition and complex multi-condition logic.
+ */
+export const ConditionalLogicSchema = z.union([
+  // Simple single condition
+  SingleConditionSchema,
+  // Multi-condition with operator
+  z.object({
+    operator: z
+      .enum(['AND', 'OR'])
+      .describe('Logical operator for combining conditions'),
+    conditions: z
+      .array(SingleConditionSchema)
+      .min(2)
+      .describe('Array of conditions to evaluate'),
+  }),
+]);
 
 export type ConditionalLogic = z.infer<typeof ConditionalLogicSchema>;
 
@@ -81,6 +162,13 @@ export const ValidationRulesSchema = z.object({
     .int()
     .optional()
     .describe('Maximum number of selections (multiple-select)'),
+  dateTime: DateTimeValidationSchema.optional().describe(
+    'Date/time specific validation rules',
+  ),
+  customErrorMessage: z
+    .string()
+    .optional()
+    .describe('Custom error message for validation failures'),
 });
 
 export type ValidationRules = z.infer<typeof ValidationRulesSchema>;
@@ -92,6 +180,12 @@ export const QuestionDefinitionSchema = z.object({
   id: z.string().describe('Unique question identifier within the survey'),
   type: QuestionTypeSchema.describe('Question type'),
   text: z.string().describe('Question text displayed to participants'),
+  helpText: z
+    .string()
+    .optional()
+    .describe(
+      'Optional help text providing additional context or instructions for the question',
+    ),
   required: z
     .boolean()
     .default(false)
@@ -102,6 +196,9 @@ export const QuestionDefinitionSchema = z.object({
     .describe('Options for multiple-choice or multiple-select questions'),
   scale: RatingScaleSchema.optional().describe(
     'Scale configuration for rating-scale questions',
+  ),
+  matrix: MatrixConfigSchema.optional().describe(
+    'Matrix configuration for matrix/grid questions',
   ),
   conditional: ConditionalLogicSchema.optional().describe(
     'Conditional logic determining when this question is shown',

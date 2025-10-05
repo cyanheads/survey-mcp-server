@@ -151,9 +151,16 @@ function responseFormatter(result: GetQuestionResponse): ContentBlock[] {
   }
 
   // Show conditional dependency if exists
-  const conditionalInfo = q.conditional
-    ? `\n**Depends On:** Question ${q.conditional.dependsOn} (show if: ${q.conditional.showIf.join(', ')})`
-    : '';
+  let conditionalInfo = '';
+  if (q.conditional) {
+    if ('dependsOn' in q.conditional && 'showIf' in q.conditional) {
+      // Simple single condition
+      conditionalInfo = `\n**Depends On:** Question ${q.conditional.dependsOn} (show if: ${q.conditional.showIf.join(', ')})`;
+    } else if ('operator' in q.conditional && 'conditions' in q.conditional) {
+      // Multi-condition
+      conditionalInfo = `\n**Conditional Logic:** ${q.conditional.operator} (${q.conditional.conditions.length} conditions)`;
+    }
+  }
 
   const parts = [
     header,

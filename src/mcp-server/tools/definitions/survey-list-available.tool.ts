@@ -102,15 +102,11 @@ function responseFormatter(result: SurveyListResponse): ContentBlock[] {
     .map((s, index) => {
       const duration = s.estimatedDuration ? `⏱️  ${s.estimatedDuration}` : '';
       const questions = `📝 ${s.questionCount} question${s.questionCount !== 1 ? 's' : ''}`;
-      const description =
-        s.description.length > 100
-          ? `${s.description.slice(0, 97)}...`
-          : s.description;
 
       return [
         `${index + 1}. **${s.title}**`,
         `   ID: \`${s.id}\``,
-        `   ${description}`,
+        `   ${s.description}`,
         duration && questions
           ? `   ${duration} | ${questions}`
           : duration || questions,

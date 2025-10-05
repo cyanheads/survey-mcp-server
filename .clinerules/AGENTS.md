@@ -186,7 +186,9 @@ function responseFormatter(result: SubmitResponseResponse): ContentBlock[] {
               (q) => q.id === change.questionId,
             );
             const reqTag = question?.required ? '[Required]' : '[Optional]';
-            const reason = change.reason ? `\n   ↪ _Reason: ${change.reason}_` : '';
+            const reason = change.reason
+              ? `\n   ↪ _Reason: ${change.reason}_`
+              : '';
             return `• ${reqTag} "${question?.text || change.questionId}"${reason}`;
           })
           .join('\n')}`
@@ -206,8 +208,8 @@ function responseFormatter(result: SubmitResponseResponse): ContentBlock[] {
   // 4. Give High-Level Conversational Guidance
   const guidance =
     progressPercent >= 100
-      ? "\n\n✅ All questions answered! Use `survey_complete_session` to finalize."
-      : "\n\n💡 Continue the conversation naturally. You can ask any available question.";
+      ? '\n\n✅ All questions answered! Use `survey_complete_session` to finalize.'
+      : '\n\n💡 Continue the conversation naturally. You can ask any available question.';
 
   // Assemble the final output
   return [
@@ -221,11 +223,11 @@ function responseFormatter(result: SubmitResponseResponse): ContentBlock[] {
 
 **Key Takeaways from This Example:**
 
--   **Give the LLM Everything It Needs:** The output includes progress, newly unlocked questions (with text and reasons), and suggestions for what to ask next. This prevents the LLM from having to make extra tool calls (`get_progress`, `get_question`) to figure out what to do.
--   **Use Visual Cues:** Emojis (✓, 🆕, 📋) and simple ASCII graphics (`[███░░]`) make the output easier for both humans and LLMs to parse quickly.
--   **Handle States Gracefully:** The formatter has a separate, clear path for validation errors, telling the LLM exactly how to handle the failure.
--   **Structure for Clarity:** The output is organized with clear Markdown headings (`**Progress:**`, `**New Questions Unlocked:**`) to create a logical flow.
--   **Provide Actionable Guidance:** The final text gives the LLM a direct suggestion (e.g., use `survey_complete_session`), guiding it toward the correct next action.
+- **Give the LLM Everything It Needs:** The output includes progress, newly unlocked questions (with text and reasons), and suggestions for what to ask next. This prevents the LLM from having to make extra tool calls (`get_progress`, `get_question`) to figure out what to do.
+- **Use Visual Cues:** Emojis (✓, 🆕, 📋) and simple ASCII graphics (`[███░░]`) make the output easier for both humans and LLMs to parse quickly.
+- **Handle States Gracefully:** The formatter has a separate, clear path for validation errors, telling the LLM exactly how to handle the failure.
+- **Structure for Clarity:** The output is organized with clear Markdown headings (`**Progress:**`, `**New Questions Unlocked:**`) to create a logical flow.
+- **Provide Actionable Guidance:** The final text gives the LLM a direct suggestion (e.g., use `survey_complete_session`), guiding it toward the correct next action.
 
 ---
 
