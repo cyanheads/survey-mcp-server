@@ -75,6 +75,18 @@ describe('surveyCompleteSessionTool', () => {
     });
   });
 
+  it('throws error when no tenant present in context', async () => {
+    setupSurveyServiceMock();
+
+    await expect(
+      surveyCompleteSessionTool.logic(
+        { sessionId: 'sess-missing-completion' },
+        createTenantlessRequestContext(),
+        sdkContext,
+      ),
+    ).rejects.toThrow('Tenant ID is required for this operation');
+  });
+
   it('falls back to current timestamp when service omits completedAt', async () => {
     const { mocks } = setupSurveyServiceMock({
       completeSession: vi.fn().mockResolvedValue({
@@ -84,7 +96,7 @@ describe('surveyCompleteSessionTool', () => {
           surveyId: 'survey-80',
           surveyVersion: '1.0',
           participantId: 'participant-10',
-          tenantId: 'default-tenant',
+          tenantId: 'tenant-123',
           status: 'completed' as const,
           startedAt: '2024-03-02T11:00:00.000Z',
           lastActivityAt: '2024-03-02T12:00:00.000Z',
@@ -111,14 +123,14 @@ describe('surveyCompleteSessionTool', () => {
     const before = Date.now();
     const result = await surveyCompleteSessionTool.logic(
       { sessionId: 'sess-missing-completion' },
-      createTenantlessRequestContext(),
+      createRequestContext(),
       sdkContext,
     );
     const after = Date.now();
 
     expect(mocks.completeSession).toHaveBeenCalledWith(
       'sess-missing-completion',
-      'default-tenant',
+      'tenant-123',
     );
 
     const completedTime = Date.parse(result.completedAt);

@@ -134,53 +134,16 @@ describe('surveyResumeSessionTool', () => {
     );
   });
 
-  it('uses default tenant when none is provided in context', async () => {
-    const { mocks } = setupSurveyServiceMock({
-      resumeSession: vi.fn().mockResolvedValue({
-        session: {
-          sessionId: 'sess-tenantless',
-          surveyId: 'survey-tenantless',
-          surveyVersion: '1.0',
-          participantId: 'participant-tenantless',
-          tenantId: 'default-tenant',
-          status: 'in-progress' as const,
-          startedAt: '2024-01-01T00:00:00.000Z',
-          lastActivityAt: '2024-01-01T01:00:00.000Z',
-          completedAt: null,
-          metadata: {},
-          responses: {},
-          progress: {
-            totalQuestions: 1,
-            answeredQuestions: 0,
-            requiredRemaining: 1,
-            percentComplete: 0,
-            requiredAnswered: 0,
-            estimatedTimeRemaining: '2 minutes',
-          },
-        },
-        survey: {
-          id: 'survey-tenantless',
-          version: '1.0',
-          metadata: { title: 'Tenantless', description: 'Test' },
-          questions: [],
-          settings: {},
-        },
-        answeredQuestions: [],
-        nextSuggestedQuestions: [],
-        elapsedTimeSinceLastActivity: '5 minutes',
-      }),
-    });
+  it('throws error when no tenant present in context', async () => {
+    setupSurveyServiceMock();
 
-    await surveyResumeSessionTool.logic(
-      { sessionId: 'sess-tenantless' },
-      createTenantlessRequestContext(),
-      sdkContext,
-    );
-
-    expect(mocks.resumeSession).toHaveBeenCalledWith(
-      'sess-tenantless',
-      'default-tenant',
-    );
+    await expect(
+      surveyResumeSessionTool.logic(
+        { sessionId: 'sess-tenantless' },
+        createTenantlessRequestContext(),
+        sdkContext,
+      ),
+    ).rejects.toThrow('Tenant ID is required for this operation');
   });
 
   describe('responseFormatter', () => {

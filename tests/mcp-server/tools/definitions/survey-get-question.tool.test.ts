@@ -75,6 +75,18 @@ describe('surveyGetQuestionTool', () => {
     expect(result.guidanceForLLM).toContain('already been answered');
   });
 
+  it('throws error when no tenant present in context', async () => {
+    setupSurveyServiceMock();
+
+    await expect(
+      surveyGetQuestionTool.logic(
+        { sessionId: 'sess-88', questionId: 'q8' },
+        createTenantlessRequestContext(),
+        sdkContext,
+      ),
+    ).rejects.toThrow('Tenant ID is required for this operation');
+  });
+
   it('explains when a question is not currently eligible', async () => {
     const question = {
       id: 'q8',
@@ -92,14 +104,14 @@ describe('surveyGetQuestionTool', () => {
 
     const result = await surveyGetQuestionTool.logic(
       { sessionId: 'sess-88', questionId: 'q8' },
-      createTenantlessRequestContext(),
+      createRequestContext(),
       sdkContext,
     );
 
     expect(mocks.getQuestion).toHaveBeenCalledWith(
       'sess-88',
       'q8',
-      'default-tenant',
+      'tenant-123',
     );
     expect(result.guidanceForLLM).toContain('not currently available');
     expect(result.guidanceForLLM).toContain('Pending approval');

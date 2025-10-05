@@ -131,40 +131,20 @@ describe('surveySubmitResponseTool', () => {
     );
   });
 
-  it('uses fallback tenant when no tenant present in context', async () => {
-    const { mocks } = setupSurveyServiceMock({
-      submitResponse: vi.fn().mockResolvedValue({
-        success: true,
-        validation: { valid: true, errors: [] },
-        progress: {
-          totalQuestions: 1,
-          answeredQuestions: 1,
-          requiredRemaining: 0,
-          percentComplete: 100,
-          requiredAnswered: 1,
-          estimatedTimeRemaining: '0 minutes',
+  it('throws error when no tenant present in context', async () => {
+    setupSurveyServiceMock();
+
+    await expect(
+      surveySubmitResponseTool.logic(
+        {
+          sessionId: 'sess-tenantless',
+          questionId: 'q1',
+          value: 'answer',
         },
-        updatedEligibility: [],
-        nextSuggestedQuestions: [],
-      }),
-    });
-
-    await surveySubmitResponseTool.logic(
-      {
-        sessionId: 'sess-tenantless',
-        questionId: 'q1',
-        value: 'answer',
-      },
-      createTenantlessRequestContext(),
-      sdkContext,
-    );
-
-    expect(mocks.submitResponse).toHaveBeenCalledWith(
-      'sess-tenantless',
-      'q1',
-      'answer',
-      'default-tenant',
-    );
+        createTenantlessRequestContext(),
+        sdkContext,
+      ),
+    ).rejects.toThrow('Tenant ID is required for this operation');
   });
 
   describe('responseFormatter', () => {

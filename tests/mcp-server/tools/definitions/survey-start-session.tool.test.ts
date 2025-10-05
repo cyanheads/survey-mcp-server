@@ -127,12 +127,27 @@ describe('surveyStartSessionTool', () => {
     expect(result.guidanceForLLM).toContain('complete survey context');
   });
 
-  it('passes undefined metadata and defaults tenant when missing', async () => {
+  it('throws error when no tenant present in context', async () => {
+    setupSurveyServiceMock();
+
+    await expect(
+      surveyStartSessionTool.logic(
+        {
+          surveyId: 'survey-tenantless',
+          participantId: 'participant-tenantless',
+        },
+        createTenantlessRequestContext(),
+        sdkContext,
+      ),
+    ).rejects.toThrow('Tenant ID is required for this operation');
+  });
+
+  it('passes undefined metadata when not provided', async () => {
     const surveyDefinition = {
-      id: 'survey-tenantless',
+      id: 'survey-no-metadata',
       version: '1.0',
       metadata: {
-        title: 'Tenantless Survey',
+        title: 'Survey Without Metadata',
         description: 'No metadata provided',
       },
       questions: [],
@@ -142,11 +157,11 @@ describe('surveyStartSessionTool', () => {
     const { mocks } = setupSurveyServiceMock({
       startSession: vi.fn().mockResolvedValue({
         session: {
-          sessionId: 'sess-tenantless',
+          sessionId: 'sess-no-metadata',
           surveyId: surveyDefinition.id,
           surveyVersion: surveyDefinition.version,
-          participantId: 'participant-tenantless',
-          tenantId: 'default-tenant',
+          participantId: 'participant-no-metadata',
+          tenantId: 'tenant-123',
           status: 'in-progress' as const,
           startedAt: '2024-01-01T00:00:00.000Z',
           lastActivityAt: '2024-01-01T00:00:00.000Z',
@@ -170,17 +185,17 @@ describe('surveyStartSessionTool', () => {
 
     await surveyStartSessionTool.logic(
       {
-        surveyId: 'survey-tenantless',
-        participantId: 'participant-tenantless',
+        surveyId: 'survey-no-metadata',
+        participantId: 'participant-no-metadata',
       },
-      createTenantlessRequestContext(),
+      createRequestContext(),
       sdkContext,
     );
 
     expect(mocks.startSession).toHaveBeenCalledWith(
-      'survey-tenantless',
-      'participant-tenantless',
-      'default-tenant',
+      'survey-no-metadata',
+      'participant-no-metadata',
+      'tenant-123',
       undefined,
     );
   });

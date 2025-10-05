@@ -135,50 +135,16 @@ describe('surveyGetProgressTool', () => {
     expect(result.guidanceForLLM).toContain('survey can be completed');
   });
 
-  it('defaults to the fallback tenant when context lacks tenant', async () => {
-    const progress = {
-      totalQuestions: 2,
-      answeredQuestions: 1,
-      requiredRemaining: 1,
-      percentComplete: 50,
-      requiredAnswered: 1,
-      estimatedTimeRemaining: '2 minutes',
-    };
+  it('throws error when no tenant present in context', async () => {
+    setupSurveyServiceMock();
 
-    const { mocks } = setupSurveyServiceMock({
-      getProgress: vi.fn().mockResolvedValue({
-        session: {
-          sessionId: 'sess-400',
-          surveyId: 'survey-7',
-          surveyVersion: '1.0',
-          participantId: 'participant-9',
-          tenantId: 'default-tenant',
-          status: 'in-progress' as const,
-          startedAt: '2024-03-01T00:00:00.000Z',
-          lastActivityAt: '2024-03-01T00:10:00.000Z',
-          completedAt: null,
-          metadata: {},
-          responses: {},
-          progress,
-        },
-        unansweredRequired: [],
-        unansweredOptional: [],
-        canComplete: false,
-        completionBlockers: ['Required question q1 not answered'],
-      }),
-    });
-
-    const result = await surveyGetProgressTool.logic(
-      { sessionId: 'sess-400' },
-      createTenantlessRequestContext(),
-      sdkContext,
-    );
-
-    expect(mocks.getProgress).toHaveBeenCalledWith(
-      'sess-400',
-      'default-tenant',
-    );
-    expect(result.progress).toEqual(progress);
+    await expect(
+      surveyGetProgressTool.logic(
+        { sessionId: 'sess-400' },
+        createTenantlessRequestContext(),
+        sdkContext,
+      ),
+    ).rejects.toThrow('Tenant ID is required for this operation');
   });
 
   describe('responseFormatter', () => {

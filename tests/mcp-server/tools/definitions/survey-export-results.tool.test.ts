@@ -59,34 +59,19 @@ describe('surveyExportResultsTool', () => {
     });
   });
 
-  it('uses the fallback tenant and passes through optional filters', async () => {
-    const generatedAt = '2024-05-12T10:00:00.000Z';
+  it('throws error when no tenant present in context', async () => {
+    setupSurveyServiceMock();
 
-    const { mocks } = setupSurveyServiceMock({
-      exportResults: vi.fn().mockResolvedValue({
-        format: 'json' as const,
-        data: '[{"sessionId":"sess-1"}]',
-        recordCount: 1,
-        generatedAt,
-      }),
-    });
-
-    const result = await surveyExportResultsTool.logic(
-      {
-        surveyId: 'survey-22',
-        format: 'json',
-      },
-      createTenantlessRequestContext(),
-      sdkContext,
-    );
-
-    expect(mocks.exportResults).toHaveBeenCalledWith(
-      'survey-22',
-      'default-tenant',
-      'json',
-      undefined,
-    );
-    expect(result.recordCount).toBe(1);
+    await expect(
+      surveyExportResultsTool.logic(
+        {
+          surveyId: 'survey-22',
+          format: 'json',
+        },
+        createTenantlessRequestContext(),
+        sdkContext,
+      ),
+    ).rejects.toThrow('Tenant ID is required for this operation');
   });
 
   describe('responseFormatter', () => {
