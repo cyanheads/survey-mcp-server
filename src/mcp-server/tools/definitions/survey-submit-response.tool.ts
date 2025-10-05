@@ -21,13 +21,14 @@ import {
   SessionProgressSchema,
   ValidationResultSchema,
 } from '@/services/survey/types.js';
+import { JsonRpcErrorCode, McpError } from '@/types-global/errors.js';
 import type { RequestContext } from '@/utils/index.js';
 import { logger } from '@/utils/index.js';
 
 const TOOL_NAME = 'survey_submit_response';
 const TOOL_TITLE = 'Submit Survey Response';
 const TOOL_DESCRIPTION =
-  "Record a participant's answer to a survey question. Validates the response against question rules, updates session progress, detects eligibility changes for conditional questions, and returns updated question suggestions. If validation fails, provides specific guidance for re-prompting.";
+  "Record a participant's answer to a survey question. Validates the response against question rules, updates session progress, detects eligibility changes for conditional questions, and returns updated question suggestions. If validation fails, re-prompt the participant with the specific guidance provided.";
 
 const TOOL_ANNOTATIONS: ToolAnnotations = {
   readOnlyHint: false,
@@ -66,7 +67,7 @@ const OutputSchema = z
       .describe('Updated list of 3-5 suggested next questions'),
     guidanceForLLM: z
       .string()
-      .describe('Guidance on how to proceed after this submission'),
+      .describe('Instructions for next steps after recording this response'),
   })
   .describe('Response submission result.');
 
@@ -80,7 +81,14 @@ async function submitResponseLogic(
 ): Promise<SubmitResponseResponse> {
   logger.debug('Submitting survey response', appContext);
 
-  const tenantId = appContext.tenantId || 'default-tenant';
+  const tenantId = appContext.tenantId;
+  if (!tenantId) {
+    throw new McpError(
+      JsonRpcErrorCode.InvalidRequest,
+      'Tenant ID is required for this operation',
+      { operation: TOOL_NAME },
+    );
+  }
 
   const surveyService = container.resolve<SurveyService>(SurveyServiceToken);
 

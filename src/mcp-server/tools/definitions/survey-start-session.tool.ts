@@ -16,13 +16,14 @@ import { SurveyServiceToken } from '@/container/tokens.js';
 import { container } from 'tsyringe';
 import type { SurveyService } from '@/services/survey/core/SurveyService.js';
 import { EnrichedQuestionSchema } from '@/services/survey/types.js';
+import { JsonRpcErrorCode, McpError } from '@/types-global/errors.js';
 import type { RequestContext } from '@/utils/index.js';
 import { logger } from '@/utils/index.js';
 
 const TOOL_NAME = 'survey_start_session';
 const TOOL_TITLE = 'Start Survey Session';
 const TOOL_DESCRIPTION =
-  'Initialize a new survey session for a participant. Returns the complete survey context including all questions with eligibility status and initial suggested questions to ask. The LLM can ask questions in any order that feels natural to the conversation.';
+  'Initialize a new survey session for a participant. Returns the complete survey context including all questions with eligibility status and initial suggested questions to ask. Ask the participant questions in a conversational manner, in any order that feels natural to the conversation.';
 
 const TOOL_ANNOTATIONS: ToolAnnotations = {
   readOnlyHint: false,
@@ -93,7 +94,14 @@ async function startSessionLogic(
 ): Promise<StartSessionResponse> {
   logger.debug('Starting survey session', appContext);
 
-  const tenantId = appContext.tenantId || 'default-tenant';
+  const tenantId = appContext.tenantId;
+  if (!tenantId) {
+    throw new McpError(
+      JsonRpcErrorCode.InvalidRequest,
+      'Tenant ID is required for this operation',
+      { operation: TOOL_NAME },
+    );
+  }
 
   const surveyService = container.resolve<SurveyService>(SurveyServiceToken);
 

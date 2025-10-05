@@ -20,13 +20,14 @@ import {
   SessionProgressSchema,
   SessionStatusSchema,
 } from '@/services/survey/types.js';
+import { JsonRpcErrorCode, McpError } from '@/types-global/errors.js';
 import type { RequestContext } from '@/utils/index.js';
 import { logger } from '@/utils/index.js';
 
 const TOOL_NAME = 'survey_get_progress';
 const TOOL_TITLE = 'Get Survey Progress';
 const TOOL_DESCRIPTION =
-  'Check the current progress and completion status of a survey session. Returns remaining required and optional questions, completion eligibility, and any blockers preventing completion.';
+  'Check the current progress and completion status of a survey session. Returns remaining required and optional questions, completion eligibility status, and any blockers preventing completion.';
 
 const TOOL_ANNOTATIONS: ToolAnnotations = {
   readOnlyHint: true,
@@ -58,7 +59,9 @@ const OutputSchema = z
       .describe('Reasons why session cannot be completed (if any)'),
     guidanceForLLM: z
       .string()
-      .describe('Guidance on whether to continue or complete the survey'),
+      .describe(
+        'Instructions for continuing or completing the survey based on current progress',
+      ),
   })
   .describe('Survey progress information.');
 
@@ -72,7 +75,14 @@ async function getProgressLogic(
 ): Promise<GetProgressResponse> {
   logger.debug('Getting survey progress', appContext);
 
-  const tenantId = appContext.tenantId || 'default-tenant';
+  const tenantId = appContext.tenantId;
+  if (!tenantId) {
+    throw new McpError(
+      JsonRpcErrorCode.InvalidRequest,
+      'Tenant ID is required for this operation',
+      { operation: TOOL_NAME },
+    );
+  }
 
   const surveyService = container.resolve<SurveyService>(SurveyServiceToken);
 

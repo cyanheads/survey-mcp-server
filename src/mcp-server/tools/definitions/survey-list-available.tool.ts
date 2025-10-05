@@ -15,6 +15,7 @@ import { withToolAuth } from '@/mcp-server/transports/auth/lib/withAuth.js';
 import { SurveyServiceToken } from '@/container/tokens.js';
 import { container } from 'tsyringe';
 import type { SurveyService } from '@/services/survey/core/SurveyService.js';
+import { JsonRpcErrorCode, McpError } from '@/types-global/errors.js';
 import type { RequestContext } from '@/utils/index.js';
 import { logger } from '@/utils/index.js';
 
@@ -72,6 +73,13 @@ async function surveyListLogic(
 
   const surveyService = container.resolve<SurveyService>(SurveyServiceToken);
   const tenantId = input.tenantId || appContext.tenantId;
+  if (!tenantId) {
+    throw new McpError(
+      JsonRpcErrorCode.InvalidRequest,
+      'Tenant ID is required for this operation',
+      { operation: TOOL_NAME },
+    );
+  }
 
   const surveys = await surveyService.listAvailableSurveys(tenantId);
 

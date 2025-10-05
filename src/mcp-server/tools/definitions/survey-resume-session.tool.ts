@@ -16,13 +16,14 @@ import { SurveyServiceToken } from '@/container/tokens.js';
 import { container } from 'tsyringe';
 import type { SurveyService } from '@/services/survey/core/SurveyService.js';
 import { EnrichedQuestionSchema } from '@/services/survey/types.js';
+import { JsonRpcErrorCode, McpError } from '@/types-global/errors.js';
 import type { RequestContext } from '@/utils/index.js';
 import { logger } from '@/utils/index.js';
 
 const TOOL_NAME = 'survey_resume_session';
 const TOOL_TITLE = 'Resume Survey Session';
 const TOOL_DESCRIPTION =
-  'Resume an incomplete survey session. Restores the full survey context, lists previously answered questions, provides updated question suggestions, and reports time elapsed since last activity.';
+  'Resume an incomplete survey session. Restores the full survey context, lists previously answered questions, provides updated question suggestions, and reports time elapsed since last activity. Continue the conversation naturally from where the participant left off.';
 
 const TOOL_ANNOTATIONS: ToolAnnotations = {
   readOnlyHint: false,
@@ -89,7 +90,9 @@ const OutputSchema = z
       .describe('Updated list of 3-5 suggested next questions'),
     guidanceForLLM: z
       .string()
-      .describe('Guidance on how to continue the resumed survey'),
+      .describe(
+        'Instructions for continuing the conversation from where the participant left off',
+      ),
   })
   .describe('Survey session resumption result.');
 
@@ -103,7 +106,14 @@ async function resumeSessionLogic(
 ): Promise<ResumeSessionResponse> {
   logger.debug('Resuming survey session', appContext);
 
-  const tenantId = appContext.tenantId || 'default-tenant';
+  const tenantId = appContext.tenantId;
+  if (!tenantId) {
+    throw new McpError(
+      JsonRpcErrorCode.InvalidRequest,
+      'Tenant ID is required for this operation',
+      { operation: TOOL_NAME },
+    );
+  }
 
   const surveyService = container.resolve<SurveyService>(SurveyServiceToken);
 

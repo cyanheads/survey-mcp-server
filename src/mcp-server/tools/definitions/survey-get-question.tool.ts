@@ -16,6 +16,7 @@ import { SurveyServiceToken } from '@/container/tokens.js';
 import { container } from 'tsyringe';
 import type { SurveyService } from '@/services/survey/core/SurveyService.js';
 import { EnrichedQuestionSchema } from '@/services/survey/types.js';
+import { JsonRpcErrorCode, McpError } from '@/types-global/errors.js';
 import type { RequestContext } from '@/utils/index.js';
 import { logger } from '@/utils/index.js';
 
@@ -44,7 +45,9 @@ const OutputSchema = z
     ),
     guidanceForLLM: z
       .string()
-      .describe('Guidance on whether and how to ask this question'),
+      .describe(
+        'Instructions for asking this question based on its current eligibility',
+      ),
   })
   .describe('Question retrieval response.');
 
@@ -58,7 +61,14 @@ async function getQuestionLogic(
 ): Promise<GetQuestionResponse> {
   logger.debug('Getting question details', appContext);
 
-  const tenantId = appContext.tenantId || 'default-tenant';
+  const tenantId = appContext.tenantId;
+  if (!tenantId) {
+    throw new McpError(
+      JsonRpcErrorCode.InvalidRequest,
+      'Tenant ID is required for this operation',
+      { operation: TOOL_NAME },
+    );
+  }
 
   const surveyService = container.resolve<SurveyService>(SurveyServiceToken);
 

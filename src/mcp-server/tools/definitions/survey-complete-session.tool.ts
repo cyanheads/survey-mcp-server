@@ -15,13 +15,14 @@ import { withToolAuth } from '@/mcp-server/transports/auth/lib/withAuth.js';
 import { SurveyServiceToken } from '@/container/tokens.js';
 import { container } from 'tsyringe';
 import type { SurveyService } from '@/services/survey/core/SurveyService.js';
+import { JsonRpcErrorCode, McpError } from '@/types-global/errors.js';
 import type { RequestContext } from '@/utils/index.js';
 import { logger } from '@/utils/index.js';
 
 const TOOL_NAME = 'survey_complete_session';
 const TOOL_TITLE = 'Complete Survey Session';
 const TOOL_DESCRIPTION =
-  'Finalize a survey session after all required questions have been answered. Validates completion eligibility, marks the session as complete, and returns a summary of the session including duration and total questions answered.';
+  'Finalize a survey session after all required questions have been answered. Validates completion eligibility, marks the session as complete, and returns a summary including duration and total questions answered.';
 
 const TOOL_ANNOTATIONS: ToolAnnotations = {
   readOnlyHint: false,
@@ -60,9 +61,7 @@ const OutputSchema = z
         duration: z.string().describe('Time taken to complete the survey'),
       })
       .describe('Survey completion summary'),
-    message: z
-      .string()
-      .describe('Message to display to the participant or LLM'),
+    message: z.string().describe('Completion confirmation message'),
   })
   .describe('Survey completion result.');
 
@@ -76,7 +75,14 @@ async function completeSessionLogic(
 ): Promise<CompleteSessionResponse> {
   logger.debug('Completing survey session', appContext);
 
-  const tenantId = appContext.tenantId || 'default-tenant';
+  const tenantId = appContext.tenantId;
+  if (!tenantId) {
+    throw new McpError(
+      JsonRpcErrorCode.InvalidRequest,
+      'Tenant ID is required for this operation',
+      { operation: TOOL_NAME },
+    );
+  }
 
   const surveyService = container.resolve<SurveyService>(SurveyServiceToken);
 
