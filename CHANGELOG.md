@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.4] - 2025-10-05
+
+### Changed
+- **Project Documentation**: Updated `README.md` and `docs/tree.md` to reflect the latest project structure and status.
+- **Configuration**: Refreshed `package.json` and `server.json` with current dependencies, metadata, and server settings.
+- **Survey Tools**: Updated all survey tool definitions with improved logic, schemas, and response formatting.
+- **Testing**: Enhanced and updated the test suite for all survey tools to ensure comprehensive coverage and validation of recent changes.
+
 ## [1.0.3] - 2025-10-05
 
 ### Added
