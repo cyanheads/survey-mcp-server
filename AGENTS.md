@@ -1,8 +1,8 @@
 # Agent Protocol & Architectural Mandate
 
-**Version:** 1.0.0
+**Version:** 1.0.3
 **Target Project:** survey-mcp-server
-**Last Updated:** 2025-10-04
+**Last Updated:** 2025-10-05
 
 This document defines the operational rules for contributing to this codebase. Follow it exactly.
 
@@ -143,53 +143,89 @@ The `responseFormatter` function determines what the LLM receives. Follow these 
 - For comparisons, show both commonalities/differences AND detailed breakdowns
 - Use markdown formatting for clarity (headings, lists, code blocks)
 
-**Examples:**
+**Example: Rich Contextual Formatter (`survey_submit_response`)**
+
+This example from the `survey_submit_response` tool demonstrates how to build a rich, LLM-facing output that provides comprehensive context, including visual progress, newly available questions, and clear next steps. This empowers the LLM to continue the conversation intelligently without needing to make extra tool calls.
 
 ```typescript
-// BAD: Summary only - LLM cannot answer detailed questions
-function badFormatter(result: ComparisonOutput): ContentBlock[] {
+// GOOD: Provides a rich, multi-faceted response for the LLM
+function responseFormatter(result: SubmitResponseResponse): ContentBlock[] {
+  // Handle validation failure first
+  if (result.validation && !result.validation.valid) {
+    const errors = result.validation.errors
+      .map((e) => `• ${e.message} (constraint: ${e.constraint})`)
+      .join('\n');
+    return [
+      {
+        type: 'text',
+        text: `❌ Validation Failed\n\n${errors}\n\n💡 Please re-prompt the user with a corrected answer.`,
+      },
+    ];
+  }
+
+  // 1. Visual Progress Bar
+  const progressPercent = result.progress?.percentComplete || 0;
+  const progressBlocks = 10;
+  const filledBlocks = Math.round((progressPercent / 100) * progressBlocks);
+  const progressBar = `[${'█'.repeat(filledBlocks)}${'░'.repeat(
+    progressBlocks - filledBlocks,
+  )}]`;
+  const progress = result.progress
+    ? `${progressBar} ${progressPercent}% (${result.progress.answeredQuestions}/${result.progress.totalQuestions} questions)`
+    : '';
+
+  // 2. Highlight Newly Unlocked Questions
+  const newlyUnlocked =
+    result.updatedEligibility?.filter((c) => c.nowEligible) || [];
+  const newQuestionsSection =
+    newlyUnlocked.length > 0
+      ? `\n\n🆕 **New Questions Unlocked**:\n${newlyUnlocked
+          .map((change) => {
+            // Enrich with full question text and reason
+            const question = result.nextSuggestedQuestions?.find(
+              (q) => q.id === change.questionId,
+            );
+            const reqTag = question?.required ? '[Required]' : '[Optional]';
+            const reason = change.reason ? `\n   ↪ _Reason: ${change.reason}_` : '';
+            return `• ${reqTag} "${question?.text || change.questionId}"${reason}`;
+          })
+          .join('\n')}`
+      : '';
+
+  // 3. Provide Clear, Actionable Next Steps
+  const suggested =
+    result.nextSuggestedQuestions && result.nextSuggestedQuestions.length > 0
+      ? `\n\n📋 **Suggested Next Questions**:\n${result.nextSuggestedQuestions
+          .map((q, i) => {
+            const reqTag = q.required ? '[Required]' : '[Optional]';
+            return `${i + 1}. ${reqTag} ${q.text}`;
+          })
+          .join('\n')}`
+      : '';
+
+  // 4. Give High-Level Conversational Guidance
+  const guidance =
+    progressPercent >= 100
+      ? "\n\n✅ All questions answered! Use `survey_complete_session` to finalize."
+      : "\n\n💡 Continue the conversation naturally. You can ask any available question.";
+
+  // Assemble the final output
   return [
     {
       type: 'text',
-      text: 'Comparison complete. See structured output for details.',
+      text: `✓ Response Recorded\n\n**Progress:** ${progress}${newQuestionsSection}${suggested}${guidance}`,
     },
   ];
 }
-
-// GOOD: Summary + Details - LLM has everything it needs
-function goodFormatter(result: ComparisonOutput): ContentBlock[] {
-  const summary = `# Comparison of ${result.studies.length} Studies\n\n`;
-
-  const commonalities =
-    result.commonalities.length > 0
-      ? `## Commonalities\n${result.commonalities.map((c) => `- ${c}`).join('\n')}\n\n`
-      : '';
-
-  const details = result.studies
-    .map(
-      (study) =>
-        `### ${study.nctId}: ${study.title}\n\n` +
-        `**Status:** ${study.status}\n` +
-        `**Design:** ${study.design.type} | ${study.design.phases.join(', ')}\n` +
-        `**Interventions:** ${study.interventions.map((i) => i.name).join(', ')}\n` +
-        `**Primary Outcomes:**\n${study.outcomes.primary.map((o) => `- ${o.measure}`).join('\n')}`,
-    )
-    .join('\n\n---\n\n');
-
-  return [{ type: 'text', text: `${summary}${commonalities}${details}` }];
-}
-
-// ALSO GOOD: Pure JSON for maximum flexibility
-function jsonFormatter(result: ComparisonOutput): ContentBlock[] {
-  return [{ type: 'text', text: JSON.stringify(result, null, 2) }];
-}
 ```
 
-**When to use each approach:**
+**Key Takeaways from This Example:**
 
-- **Summary + Details**: Best for comparison tools, analysis tools, multi-entity responses
-- **Pure JSON**: Best for single-entity fetches, when data structure is self-explanatory
-- **Hybrid**: Use summary sections with selective detail inclusion for very large responses
+-   **Give the LLM Everything It Needs:** The output includes progress, newly unlocked questions (with text and reasons), and suggestions for what to ask next. This prevents the LLM from having to make extra tool calls (`get_progress`, `get_question`) to figure out what to do.
+-   **Use Visual Cues:** Emojis (✓, 🆕, 📋) and simple ASCII graphics (`[███░░]`) make the output easier for both humans and LLMs to parse quickly.
+-   **Handle States Gracefully:** The formatter has a separate, clear path for validation errors, telling the LLM exactly how to handle the failure.
+-   **Structure for Clarity:** The output is organized with clear Markdown headings (`**Progress:**`, `**New Questions Unlocked:**`) to create a logical flow.
+-   **Provide Actionable Guidance:** The final text gives the LLM a direct suggestion (e.g., use `survey_complete_session`), guiding it toward the correct next action.
 
 ---
 
