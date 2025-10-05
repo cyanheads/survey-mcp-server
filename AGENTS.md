@@ -1,6 +1,6 @@
 # Agent Protocol & Architectural Mandate
 
-**Version:** 1.0.3
+**Version:** 1.0.4
 **Target Project:** survey-mcp-server
 **Last Updated:** 2025-10-05
 
