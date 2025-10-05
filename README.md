@@ -290,18 +290,18 @@ This server equips AI agents with specialized tools to conduct dynamic, conversa
 
 All configuration is centralized and validated at startup in `src/config/index.ts`. Key environment variables in your `.env` file include:
 
-| Variable                  | Description                                                                    | Default                  |
-| :------------------------ | :----------------------------------------------------------------------------- | :----------------------- |
-| `SURVEY_DEFINITIONS_PATH` | Path to directory containing survey JSON files (recursive scan).               | `./survey-definitions`   |
-| `SURVEY_RESPONSES_PATH`   | Path to directory for storing session responses (filesystem mode).             | `./survey-responses`     |
-| `MCP_TRANSPORT_TYPE`      | The transport to use: `stdio` or `http`.                                       | `http`                   |
-| `MCP_HTTP_PORT`           | The port for the HTTP server.                                                  | `3019`                   |
-| `MCP_AUTH_MODE`           | Authentication mode: `none`, `jwt`, or `oauth`.                                | `none`                   |
-| `STORAGE_PROVIDER_TYPE`   | Storage backend: `in-memory`, `filesystem`, `supabase`, `cloudflare-kv`, `r2`. | `in-memory`              |
-| `OTEL_ENABLED`            | Set to `true` to enable OpenTelemetry.                                         | `false`                  |
-| `LOG_LEVEL`               | The minimum level for logging (`debug`, `info`, `warn`, `error`).              | `info`                   |
-| `MCP_AUTH_SECRET_KEY`     | **Required for `jwt` auth.** A 32+ character secret key.                       | `(none)`                 |
-| `OAUTH_ISSUER_URL`        | **Required for `oauth` auth.** URL of the OIDC provider.                       | `(none)`                 |
+| Variable                  | Description                                                                    | Default                |
+| :------------------------ | :----------------------------------------------------------------------------- | :--------------------- |
+| `SURVEY_DEFINITIONS_PATH` | Path to directory containing survey JSON files (recursive scan).               | `./survey-definitions` |
+| `SURVEY_RESPONSES_PATH`   | Path to directory for storing session responses (filesystem mode).             | `./survey-responses`   |
+| `MCP_TRANSPORT_TYPE`      | The transport to use: `stdio` or `http`.                                       | `http`                 |
+| `MCP_HTTP_PORT`           | The port for the HTTP server.                                                  | `3019`                 |
+| `MCP_AUTH_MODE`           | Authentication mode: `none`, `jwt`, or `oauth`.                                | `none`                 |
+| `STORAGE_PROVIDER_TYPE`   | Storage backend: `in-memory`, `filesystem`, `supabase`, `cloudflare-kv`, `r2`. | `in-memory`            |
+| `OTEL_ENABLED`            | Set to `true` to enable OpenTelemetry.                                         | `false`                |
+| `LOG_LEVEL`               | The minimum level for logging (`debug`, `info`, `warn`, `error`).              | `info`                 |
+| `MCP_AUTH_SECRET_KEY`     | **Required for `jwt` auth.** A 32+ character secret key.                       | `(none)`               |
+| `OAUTH_ISSUER_URL`        | **Required for `oauth` auth.** URL of the OIDC provider.                       | `(none)`               |
 
 ## ▶️ Running the Server
 
