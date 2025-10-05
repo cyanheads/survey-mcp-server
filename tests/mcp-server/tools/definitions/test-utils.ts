@@ -26,6 +26,12 @@ export function createRequestContext(
   return context;
 }
 
+export function createTenantlessRequestContext(): RequestContext {
+  const context = { ...BASE_REQUEST_CONTEXT } as RequestContext;
+  delete (context as { tenantId?: string }).tenantId;
+  return context;
+}
+
 type SurveyServiceMethod =
   | 'initialize'
   | 'listAvailableSurveys'

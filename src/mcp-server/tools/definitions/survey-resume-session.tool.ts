@@ -137,27 +137,64 @@ async function resumeSessionLogic(
 }
 
 function responseFormatter(result: ResumeSessionResponse): ContentBlock[] {
-  const header = `📋 Survey Session Resumed: ${result.survey.title}`;
+  const header = `👋 Welcome Back: ${result.survey.title}`;
   const sessionInfo = `Session ID: ${result.sessionId}`;
-  const elapsed = `Time Since Last Activity: ${result.elapsedTimeSinceLastActivity}`;
-  const progress = `Progress: ${result.progress.percentComplete}% (${result.progress.answeredQuestions}/${result.survey.totalQuestions} questions)`;
-  const remaining = `Required Remaining: ${result.progress.requiredRemaining}`;
+  const elapsed = `⏰ You started this survey ${result.elapsedTimeSinceLastActivity}`;
 
-  const answered = result.answeredQuestions.length
-    ? `\nPreviously Answered:\n${result.answeredQuestions.map((q) => `• ${q.text}`).join('\n')}`
+  // Visual progress bar
+  const progressPercent = result.progress.percentComplete;
+  const progressBlocks = 10;
+  const filledBlocks = Math.round((progressPercent / 100) * progressBlocks);
+  const progressBar = `[${'█'.repeat(filledBlocks)}${'░'.repeat(progressBlocks - filledBlocks)}]`;
+  const progress = `Your Progress So Far: ${progressBar} ${progressPercent}% (${result.progress.answeredQuestions}/${result.survey.totalQuestions})`;
+
+  // Group previously answered questions (show summary)
+  const answeredSection = result.answeredQuestions.length
+    ? `\n✅ Already Answered (${result.answeredQuestions.length} questions):\n${result.answeredQuestions
+        .slice(0, 5)
+        .map((q) => {
+          const answerPreview =
+            typeof q.answer === 'string' && q.answer.length > 50
+              ? `${q.answer.slice(0, 47)}...`
+              : String(q.answer);
+          return `   • ${q.text}\n     Answer: ${answerPreview}`;
+        })
+        .join(
+          '\n',
+        )}${result.answeredQuestions.length > 5 ? `\n   ... and ${result.answeredQuestions.length - 5} more` : ''}`
     : '';
 
+  // Show which required questions are still outstanding
+  const requiredRemaining = result.nextSuggestedQuestions.filter(
+    (q) => q.required && q.currentlyEligible && !q.alreadyAnswered,
+  );
+  const stillNeedSection =
+    requiredRemaining.length > 0
+      ? `\n\n⚠️  Still Need (${result.progress.requiredRemaining} required):\n${requiredRemaining
+          .slice(0, 3)
+          .map((q, i) => `${i + 1}. ${q.text}`)
+          .join('\n')}`
+      : '';
+
+  // Suggested next questions
   const suggested = result.nextSuggestedQuestions.length
-    ? `\nNext Suggested Questions:\n${result.nextSuggestedQuestions.map((q, i) => `${i + 1}. ${q.text}`).join('\n')}`
+    ? `\n\n📋 Pick Up Where You Left Off:\n${result.nextSuggestedQuestions
+        .slice(0, 5)
+        .map((q, i) => {
+          const req = q.required ? '[Required]' : '[Optional]';
+          return `${i + 1}. ${req} ${q.text}`;
+        })
+        .join('\n')}`
     : '';
 
   const parts = [
     header,
     sessionInfo,
     elapsed,
+    '',
     progress,
-    remaining,
-    answered,
+    answeredSection,
+    stillNeedSection,
     suggested,
   ].filter(Boolean);
 

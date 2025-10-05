@@ -3,7 +3,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { surveyCompleteSessionTool } from '@/mcp-server/tools/definitions/survey-complete-session.tool.js';
 import type { SdkContext } from '@/mcp-server/tools/utils/toolDefinition.js';
 
-import { createRequestContext, setupSurveyServiceMock } from './test-utils.js';
+import {
+  createRequestContext,
+  createTenantlessRequestContext,
+  setupSurveyServiceMock,
+} from './test-utils.js';
 
 const sdkContext = {} as SdkContext;
 
@@ -68,6 +72,86 @@ describe('surveyCompleteSessionTool', () => {
       },
       message:
         'Survey completed successfully! Thank you for your participation.',
+    });
+  });
+
+  it('falls back to current timestamp when service omits completedAt', async () => {
+    const { mocks } = setupSurveyServiceMock({
+      completeSession: vi.fn().mockResolvedValue({
+        success: true,
+        session: {
+          sessionId: 'sess-missing-completion',
+          surveyId: 'survey-80',
+          surveyVersion: '1.0',
+          participantId: 'participant-10',
+          tenantId: 'default-tenant',
+          status: 'completed' as const,
+          startedAt: '2024-03-02T11:00:00.000Z',
+          lastActivityAt: '2024-03-02T12:00:00.000Z',
+          completedAt: null,
+          metadata: {},
+          responses: {},
+          progress: {
+            totalQuestions: 3,
+            answeredQuestions: 3,
+            requiredRemaining: 0,
+            percentComplete: 100,
+            requiredAnswered: 3,
+            estimatedTimeRemaining: '0 minutes',
+          },
+        },
+        summary: {
+          totalQuestions: 3,
+          answeredQuestions: 3,
+          duration: '1 hour',
+        },
+      }),
+    });
+
+    const before = Date.now();
+    const result = await surveyCompleteSessionTool.logic(
+      { sessionId: 'sess-missing-completion' },
+      createTenantlessRequestContext(),
+      sdkContext,
+    );
+    const after = Date.now();
+
+    expect(mocks.completeSession).toHaveBeenCalledWith(
+      'sess-missing-completion',
+      'default-tenant',
+    );
+
+    const completedTime = Date.parse(result.completedAt);
+    expect(completedTime).toBeGreaterThanOrEqual(before - 10);
+    expect(completedTime).toBeLessThanOrEqual(after + 10);
+  });
+
+  describe('responseFormatter', () => {
+    it('builds a human-friendly summary of completion', () => {
+      const toLocaleSpy = vi
+        .spyOn(Date.prototype, 'toLocaleString')
+        .mockReturnValue('Mar 1, 2024, 3:30 PM');
+
+      const formatter = surveyCompleteSessionTool.responseFormatter!;
+      const formatted = formatter({
+        success: true,
+        sessionId: 'sess-123',
+        completedAt: '2024-03-01T15:30:00.000Z',
+        summary: {
+          totalQuestions: 6,
+          answeredQuestions: 6,
+          duration: '30 minutes',
+        },
+        message: 'Thanks!',
+      });
+
+      const [block] = formatted;
+      expect(block?.text).toContain('🎉 Survey Completed Successfully');
+      expect(block?.text).toContain('**Session ID:** `sess-123`');
+      expect(block?.text).toContain('Mar 1, 2024');
+      expect(block?.text).toContain('✅ Questions Answered: 6/6');
+
+      toLocaleSpy.mockRestore();
     });
   });
 });

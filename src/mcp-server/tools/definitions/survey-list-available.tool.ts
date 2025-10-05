@@ -87,19 +87,45 @@ async function surveyListLogic(
 }
 
 function responseFormatter(result: SurveyListResponse): ContentBlock[] {
-  const header = `Found ${result.count} available survey${result.count !== 1 ? 's' : ''}`;
+  const header = `📋 Available Surveys (${result.count})`;
+
+  if (result.count === 0) {
+    return [
+      {
+        type: 'text',
+        text: `${header}\n\nNo surveys are currently available. Check back later!`,
+      },
+    ];
+  }
 
   const surveyList = result.surveys
-    .map((s) => {
-      const duration = s.estimatedDuration ? ` (${s.estimatedDuration})` : '';
-      return `• ${s.title}${duration}\n  ID: ${s.id}\n  Questions: ${s.questionCount}\n  ${s.description}`;
+    .map((s, index) => {
+      const duration = s.estimatedDuration ? `⏱️  ${s.estimatedDuration}` : '';
+      const questions = `📝 ${s.questionCount} question${s.questionCount !== 1 ? 's' : ''}`;
+      const description =
+        s.description.length > 100
+          ? `${s.description.slice(0, 97)}...`
+          : s.description;
+
+      return [
+        `${index + 1}. **${s.title}**`,
+        `   ID: \`${s.id}\``,
+        `   ${description}`,
+        duration && questions
+          ? `   ${duration} | ${questions}`
+          : duration || questions,
+      ]
+        .filter(Boolean)
+        .join('\n');
     })
     .join('\n\n');
+
+  const footer = `\n\n💡 Use survey_start_session with the survey ID to begin!`;
 
   return [
     {
       type: 'text',
-      text: surveyList ? `${header}\n\n${surveyList}` : header,
+      text: `${header}\n\n${surveyList}${footer}`,
     },
   ];
 }

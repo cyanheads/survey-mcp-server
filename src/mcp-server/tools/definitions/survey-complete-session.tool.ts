@@ -98,21 +98,33 @@ async function completeSessionLogic(
 }
 
 function responseFormatter(result: CompleteSessionResponse): ContentBlock[] {
-  const header = '✅ Survey Completed Successfully!';
-  const sessionInfo = `Session ID: ${result.sessionId}`;
-  const completedTime = `Completed: ${new Date(result.completedAt).toLocaleString()}`;
-  const answered = `Questions Answered: ${result.summary.answeredQuestions}/${result.summary.totalQuestions}`;
-  const duration = `Duration: ${result.summary.duration}`;
+  const header = '🎉 Survey Completed Successfully!';
+  const completedTime = new Date(result.completedAt).toLocaleString('en-US', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
 
-  const parts = [
-    header,
-    sessionInfo,
-    completedTime,
-    answered,
-    duration,
-    '',
-    result.message,
-  ];
+  const sessionInfo = `\n**Session ID:** \`${result.sessionId}\``;
+  const timestamp = `**Completed:** ${completedTime}`;
+
+  // Visual completion indicator
+  const completionBar = `[${'█'.repeat(10)}] 100%`;
+
+  const summary = [
+    '\n**Summary:**',
+    `${completionBar}`,
+    `✅ Questions Answered: ${result.summary.answeredQuestions}/${result.summary.totalQuestions}`,
+    `⏱️  Time Spent: ${result.summary.duration}`,
+  ].join('\n');
+
+  const thankYou = `\n\n💬 ${result.message}`;
+
+  const nextSteps = `\n\n📊 **What's Next?**
+• Your responses have been securely saved
+• You can export results using survey_export_results
+• Contact support if you need to make changes`;
+
+  const parts = [header, sessionInfo, timestamp, summary, thankYou, nextSteps];
 
   return [{ type: 'text', text: parts.join('\n') }];
 }

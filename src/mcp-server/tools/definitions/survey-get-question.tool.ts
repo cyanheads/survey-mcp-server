@@ -93,14 +93,76 @@ async function getQuestionLogic(
 
 function responseFormatter(result: GetQuestionResponse): ContentBlock[] {
   const q = result.question;
-  const status = q.currentlyEligible ? '✓ Available' : '✗ Not Available';
-  const answered = q.alreadyAnswered ? ' (Already Answered)' : '';
   const required = q.required ? '[Required]' : '[Optional]';
 
+  // Status indicator
+  let statusEmoji = '';
+  let statusText = '';
+  if (q.alreadyAnswered) {
+    statusEmoji = '✅';
+    statusText = 'Already Answered';
+  } else if (q.currentlyEligible) {
+    statusEmoji = '✓';
+    statusText = 'Available to Ask';
+  } else {
+    statusEmoji = '🔒';
+    statusText = 'Not Yet Available';
+  }
+
+  const header = `${statusEmoji} ${required} Question Details`;
+  const questionText = `\n**Question:** ${q.text}`;
+  const statusLine = `\n**Status:** ${statusText}`;
+
+  // Show eligibility reason if not available
+  const reason = q.eligibilityReason
+    ? `\n**Reason:** ${q.eligibilityReason}`
+    : '';
+
+  // Show question type and constraints
+  let typeInfo = `\n**Type:** ${q.type}`;
+  if (q.type === 'multiple-choice' && q.options) {
+    const optionsList = q.options
+      .slice(0, 5)
+      .map((o) => `  • ${o.label}`)
+      .join('\n');
+    const moreOptions =
+      q.options.length > 5 ? `\n  ... and ${q.options.length - 5} more` : '';
+    typeInfo += `\n**Options:**\n${optionsList}${moreOptions}`;
+  } else if (q.type === 'rating-scale' && q.scale) {
+    typeInfo += ` (${q.scale.min} to ${q.scale.max}, step: ${q.scale.step})`;
+  }
+
+  // Show validation requirements if any
+  let validationInfo = '';
+  if (q.validation) {
+    const rules: string[] = [];
+    if (q.validation.minLength)
+      rules.push(`Min length: ${q.validation.minLength}`);
+    if (q.validation.maxLength)
+      rules.push(`Max length: ${q.validation.maxLength}`);
+    if (q.validation.min !== undefined)
+      rules.push(`Min value: ${q.validation.min}`);
+    if (q.validation.max !== undefined)
+      rules.push(`Max value: ${q.validation.max}`);
+    if (q.validation.pattern) rules.push(`Pattern: ${q.validation.pattern}`);
+    if (rules.length > 0) {
+      validationInfo = `\n**Requirements:** ${rules.join(', ')}`;
+    }
+  }
+
+  // Show conditional dependency if exists
+  const conditionalInfo = q.conditional
+    ? `\n**Depends On:** Question ${q.conditional.dependsOn} (show if: ${q.conditional.showIf.join(', ')})`
+    : '';
+
   const parts = [
-    `${required} ${q.text}`,
-    `Status: ${status}${answered}`,
-    q.eligibilityReason ? `Reason: ${q.eligibilityReason}` : undefined,
+    header,
+    questionText,
+    statusLine,
+    reason,
+    typeInfo,
+    validationInfo,
+    conditionalInfo,
   ].filter(Boolean);
 
   return [{ type: 'text', text: parts.join('\n') }];

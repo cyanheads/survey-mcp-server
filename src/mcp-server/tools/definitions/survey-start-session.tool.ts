@@ -127,32 +127,42 @@ async function startSessionLogic(
 }
 
 function responseFormatter(result: StartSessionResponse): ContentBlock[] {
-  const header = `Survey Session Started: ${result.survey.title}`;
+  const header = `🎯 Survey Started: ${result.survey.title}`;
   const sessionInfo = `Session ID: ${result.sessionId}`;
-  const surveyInfo = `${result.survey.description}`;
-  const duration = result.survey.estimatedDuration
-    ? `Estimated Duration: ${result.survey.estimatedDuration}`
-    : '';
-  const questions = `Total Questions: ${result.survey.totalQuestions}`;
+
+  // Count required vs optional questions
+  const requiredCount = result.allQuestions.filter((q) => q.required).length;
+  const optionalCount = result.survey.totalQuestions - requiredCount;
+
+  const aboutSection = [
+    'About this survey:',
+    result.survey.description,
+    result.survey.estimatedDuration
+      ? `⏱️  Estimated Duration: ${result.survey.estimatedDuration}`
+      : undefined,
+    `📊 Questions: ${result.survey.totalQuestions} total (${requiredCount} required, ${optionalCount} optional)`,
+  ]
+    .filter(Boolean)
+    .join('\n');
 
   const suggested = result.nextSuggestedQuestions
     .map((q, i) => {
       const req = q.required ? '[Required]' : '[Optional]';
-      return `${i + 1}. ${req} ${q.text}`;
+      // Truncate very long questions for readability
+      const questionText =
+        q.text.length > 100 ? `${q.text.slice(0, 97)}...` : q.text;
+      return `${i + 1}. ${req} ${questionText}`;
     })
     .join('\n');
 
-  const parts = [
-    header,
-    sessionInfo,
-    '',
-    surveyInfo,
-    duration,
-    questions,
-    '',
-    'Suggested Starting Questions:',
+  const startingSection = [
+    '🔑 Getting Started - Choose Your Path:',
     suggested,
-  ].filter(Boolean);
+    '',
+    '💬 Feel free to answer in any order that feels natural!',
+  ].join('\n');
+
+  const parts = [header, sessionInfo, '', aboutSection, '', startingSection];
 
   return [{ type: 'text', text: parts.join('\n') }];
 }

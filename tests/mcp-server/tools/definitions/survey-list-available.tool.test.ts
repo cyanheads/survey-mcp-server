@@ -80,4 +80,45 @@ describe('surveyListAvailableTool', () => {
     expect(result.count).toBe(1);
     expect(result.surveys).toEqual(surveySummaries);
   });
+
+  describe('responseFormatter', () => {
+    it('formats a list of surveys with descriptions', () => {
+      const formatter = surveyListAvailableTool.responseFormatter!;
+      const formatted = formatter({
+        count: 2,
+        surveys: [
+          {
+            id: 'survey-1',
+            title: 'Customer Feedback',
+            description: 'Collect feedback on the product',
+            estimatedDuration: '5 minutes',
+            questionCount: 10,
+          },
+          {
+            id: 'survey-2',
+            title: 'Employee Happiness',
+            description: 'Understand team morale',
+            questionCount: 8,
+          },
+        ],
+      });
+
+      const [block] = formatted;
+      expect(block?.text).toContain('📋 Available Surveys (2)');
+      expect(block?.text).toContain('**Customer Feedback**');
+      expect(block?.text).toContain('📝 8 questions');
+    });
+
+    it('returns header only when there are no surveys', () => {
+      const formatter = surveyListAvailableTool.responseFormatter!;
+      const formatted = formatter({
+        count: 0,
+        surveys: [],
+      });
+
+      const [block] = formatted;
+      expect(block?.text).toContain('📋 Available Surveys (0)');
+      expect(block?.text).toContain('No surveys are currently available');
+    });
+  });
 });

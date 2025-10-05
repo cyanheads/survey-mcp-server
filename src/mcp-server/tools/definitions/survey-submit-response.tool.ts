@@ -141,31 +141,68 @@ function responseFormatter(result: SubmitResponseResponse): ContentBlock[] {
     return [
       {
         type: 'text',
-        text: `❌ Validation Failed\n\n${errors}`,
+        text: `❌ Validation Failed\n\n${errors}\n\n💡 Please provide a corrected answer that meets the requirements.`,
       },
     ];
   }
 
+  // Visual progress bar
+  const progressPercent = result.progress?.percentComplete || 0;
+  const progressBlocks = 10;
+  const filledBlocks = Math.round((progressPercent / 100) * progressBlocks);
+  const progressBar = `[${'█'.repeat(filledBlocks)}${'░'.repeat(progressBlocks - filledBlocks)}]`;
+
   const progress = result.progress
-    ? `Progress: ${result.progress.percentComplete}% (${result.progress.answeredQuestions}/${result.progress.totalQuestions} questions)`
+    ? `${progressBar} ${result.progress.percentComplete}% (${result.progress.answeredQuestions}/${result.progress.totalQuestions} questions)`
     : '';
 
-  const newQuestions =
+  // Newly unlocked questions with details
+  const newlyUnlocked =
     result.updatedEligibility && result.updatedEligibility.length > 0
-      ? `\n\nNew Questions Available:\n${result.updatedEligibility
-          .filter((c) => c.nowEligible)
-          .map((c) => `• ${c.questionId}`)
+      ? result.updatedEligibility.filter((c) => c.nowEligible)
+      : [];
+
+  const newQuestionsSection =
+    newlyUnlocked.length > 0
+      ? `\n\n🆕 New Questions Unlocked:\n${newlyUnlocked
+          .map((change) => {
+            const question = result.nextSuggestedQuestions?.find(
+              (q) => q.id === change.questionId,
+            );
+            if (question) {
+              const reqTag = question.required ? '[Required]' : '[Optional]';
+              const reason = change.reason ? `\n   ${change.reason}` : '';
+              return `• ${reqTag} "${question.text}"${reason}`;
+            }
+            return `• ${change.questionId}${change.reason ? ` - ${change.reason}` : ''}`;
+          })
           .join('\n')}`
       : '';
 
-  const suggested = result.nextSuggestedQuestions
-    ? `\n\nSuggested Next Questions:\n${result.nextSuggestedQuestions.map((q, i) => `${i + 1}. ${q.text}`).join('\n')}`
-    : '';
+  // Suggested next questions with full details
+  const suggested =
+    result.nextSuggestedQuestions && result.nextSuggestedQuestions.length > 0
+      ? `\n\n📋 Suggested Next Questions:\n${result.nextSuggestedQuestions
+          .map((q, i) => {
+            const reqTag = q.required ? '[Required]' : '[Optional]';
+            const answered = q.alreadyAnswered ? ' ✓' : '';
+            const eligibility = !q.currentlyEligible
+              ? ` (${q.eligibilityReason || 'Not yet available'})`
+              : '';
+            return `${i + 1}. ${reqTag} ${q.text}${answered}${eligibility}`;
+          })
+          .join('\n')}`
+      : '';
+
+  const guidance =
+    result.progress && result.progress.percentComplete >= 100
+      ? '\n\n✅ All questions answered! Ready to complete the survey.'
+      : '\n\n💡 Continue the conversation naturally - you can ask any available question!';
 
   return [
     {
       type: 'text',
-      text: `✓ Response Recorded\n\n${progress}${newQuestions}${suggested}`,
+      text: `✓ Response Recorded\n\nProgress: ${progress}${newQuestionsSection}${suggested}${guidance}`,
     },
   ];
 }

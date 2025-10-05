@@ -98,23 +98,51 @@ async function exportResultsLogic(
 }
 
 function responseFormatter(result: ExportResultsResponse): ContentBlock[] {
-  const header = `Survey Export (${result.format.toUpperCase()})`;
-  const stats = `Records: ${result.recordCount}`;
-  const timestamp = `Generated: ${new Date(result.generatedAt).toLocaleString()}`;
+  const formatEmoji = result.format === 'csv' ? '📊' : '📄';
+  const header = `${formatEmoji} Survey Export (${result.format.toUpperCase()})`;
+
+  const generatedTime = new Date(result.generatedAt).toLocaleString('en-US', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+
+  const metadata = [
+    `**Records Exported:** ${result.recordCount}`,
+    `**Generated:** ${generatedTime}`,
+    `**Format:** ${result.format}`,
+  ].join('\n');
 
   // Preview first few lines for CSV, or indicate JSON structure
   let preview: string;
   if (result.format === 'csv') {
-    const lines = result.data.split('\n').slice(0, 5);
-    preview = lines.join('\n');
-    if (result.data.split('\n').length > 5) {
-      preview += '\n... (truncated for preview)';
+    const lines = result.data.split('\n');
+    const previewLines = lines.slice(0, 6); // Header + 5 data rows
+    preview = `\`\`\`csv\n${previewLines.join('\n')}`;
+    if (lines.length > 6) {
+      preview += `\n... (${lines.length - 6} more rows)`;
     }
+    preview += '\n```';
   } else {
-    preview = '(JSON data - use the structured output for full access)';
+    // For JSON, show formatted preview
+    try {
+      const parsed = JSON.parse(result.data) as unknown;
+      const firstRecord: unknown = Array.isArray(parsed) ? parsed[0] : parsed;
+      preview = `\`\`\`json\n${JSON.stringify(firstRecord, null, 2)}`;
+      if (Array.isArray(parsed) && parsed.length > 1) {
+        preview += `\n... (${parsed.length - 1} more records)`;
+      }
+      preview += '\n```';
+    } catch {
+      preview = '(JSON data available in structured output)';
+    }
   }
 
-  const parts = [header, stats, timestamp, '', 'Preview:', preview];
+  const usageHint =
+    result.format === 'csv'
+      ? '\n\n💡 **Tip:** Copy the full CSV data and paste into a spreadsheet application'
+      : '\n\n💡 **Tip:** Use the structured output for programmatic access to all records';
+
+  const parts = [header, '', metadata, '', '**Preview:**', preview, usageHint];
 
   return [{ type: 'text', text: parts.join('\n') }];
 }

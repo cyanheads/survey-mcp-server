@@ -1,0 +1,34 @@
+{
+  "sessionId": "sess_UYY7CB",
+  "surveyId": "customer-satisfaction-q1-2025",
+  "surveyVersion": "1.0",
+  "participantId": "test-participant-123",
+  "tenantId": "default-tenant",
+  "status": "completed",
+  "startedAt": "2025-10-05T09:48:10.671Z",
+  "lastActivityAt": "2025-10-05T09:50:35.520Z",
+  "completedAt": "2025-10-05T09:50:35.520Z",
+  "metadata": {},
+  "responses": {
+    "q1": {
+      "questionId": "q1",
+      "value": "dissatisfied",
+      "answeredAt": "2025-10-05T09:49:14.047Z",
+      "attemptCount": 1
+    },
+    "q3": {
+      "questionId": "q3",
+      "value": 5,
+      "answeredAt": "2025-10-05T09:50:15.133Z",
+      "attemptCount": 1
+    }
+  },
+  "progress": {
+    "totalQuestions": 4,
+    "answeredQuestions": 2,
+    "requiredAnswered": 2,
+    "requiredRemaining": 0,
+    "percentComplete": 50,
+    "estimatedTimeRemaining": "1 minutes"
+  }
+}
