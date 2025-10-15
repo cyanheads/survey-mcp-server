@@ -2,9 +2,48 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.5] - 2025-10-15
+
+### Changed
+
+- **Dependencies**: Aligned with mcp-ts-template v2.4.4, updating core dependencies including MCP SDK (^1.20.0), OpenTelemetry packages (^0.206.0), Supabase (^2.75.0), Hono (^4.9.12), and numerous other packages for improved stability and features.
+- **Package Structure**: Reorganized dependencies by moving all packages to `devDependencies` for cleaner package management and better alignment with template standards.
+- **Error Handling**: Enhanced error handler with Result types for functional error handling, retry logic with exponential backoff, error cause chain extraction, and breadcrumb tracking for improved debugging.
+- **Storage Validation**: Improved input validation with opaque cursor encoding, stricter tenant ID patterns, and comprehensive JSDoc documentation for security constraints.
+- **Logger**: Added transport mode awareness to ensure STDIO mode outputs plain JSON to stderr (MCP spec compliance) while HTTP mode can use colored output in development.
+- **Rate Limiter**: Added LRU eviction strategy with configurable max tracked keys (default: 10000) to prevent memory exhaustion in high-traffic scenarios.
+- **Telemetry**: Enhanced OpenTelemetry initialization with lazy-loading for Node-specific modules, cloud platform detection, timeout protection for shutdown, and graceful degradation for Worker/Edge environments.
+- **Session Management**: Implemented MCP 2025-06-18 session lifecycle support with stateful/stateless modes, session validation, identity binding for security, and DELETE endpoint for explicit termination.
+- **HTTP Transport**: Added RFC 9728 OAuth Protected Resource Metadata endpoint, WWW-Authenticate headers for 401 responses, Origin header validation for DNS rebinding protection, and Mcp-Session-Id headers for stateful sessions.
+- **Storage Providers**: Optimized batch operations (getMany, setMany, deleteMany) with parallel execution for better performance across all providers (Cloudflare KV/R2, Supabase, FileSystem, In-Memory).
+- **Tool Registration**: Updated import paths to use barrel exports from `@/mcp-server/tools/utils/index.js` for cleaner dependency management.
+
+### Added
+
+- **Utilities**: New `formatting` module with `markdownBuilder` for structured text generation, and `pagination` module for standardized pagination patterns.
+- **Session Store**: New HTTP session management with identity binding, stale session cleanup, and security validation (`sessionStore.ts`, `sessionIdUtils.ts`).
+- **Encoding Utilities**: Added `stringToBase64` and `base64ToString` functions with cross-platform support for Node.js and Cloudflare Workers.
+- **Telemetry Metrics**: New metrics creation utilities with counter and histogram helpers for OpenTelemetry integration.
+- **Error Patterns**: Added provider-specific error patterns (AWS, HTTP status codes, databases, LLM providers) for better external service error classification.
+- **Test Coverage**: Added comprehensive test suites for container, services, storage core, transports, formatting, pagination, and telemetry modules (47 new test files).
+- **Git Attributes**: Added `.gitattributes` for consistent line ending handling across platforms.
+
+### Fixed
+
+- **TTL Handling**: Corrected TTL validation to properly handle `ttl=0` (immediate expiration) by checking for `undefined` instead of truthy values across all storage providers.
+- **Batch Operations**: Fixed edge cases in batch operations to handle empty arrays/maps gracefully (return early instead of iterating).
+- **ANSI Color Codes**: Fixed STDIO mode to disable color codes before any imports to ensure MCP spec compliance (clean JSON-RPC on stdout).
+- **Cursor Pagination**: Implemented opaque cursor encoding with tenant validation to prevent cursor tampering and cross-tenant data access.
+
+### Removed
+
+- **Echo Resource**: Removed template echo resource definition and tests to streamline codebase for production use.
+- **Unused Dependencies**: Cleaned up `.gitignore` by removing duplicate coverage directory entries.
+
 ## [1.0.4] - 2025-10-05
 
 ### Changed
+
 - **Project Documentation**: Updated `README.md` and `docs/tree.md` to reflect the latest project structure and status.
 - **Configuration**: Refreshed `package.json` and `server.json` with current dependencies, metadata, and server settings.
 - **Survey Tools**: Updated all survey tool definitions with improved logic, schemas, and response formatting.

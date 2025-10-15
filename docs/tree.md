@@ -1,6 +1,6 @@
 # survey-mcp-server - Directory Structure
 
-Generated on: 2025-10-05 11:51:57
+Generated on: 2025-10-15 18:16:15
 
 ```
 survey-mcp-server
@@ -39,7 +39,6 @@ survey-mcp-server
 │   ├── mcp-server
 │   │   ├── resources
 │   │   │   ├── definitions
-│   │   │   │   ├── echo.resource.ts
 │   │   │   │   └── index.ts
 │   │   │   ├── utils
 │   │   │   │   ├── resourceDefinition.ts
@@ -57,6 +56,7 @@ survey-mcp-server
 │   │   │   │   ├── survey-start-session.tool.ts
 │   │   │   │   └── survey-submit-response.tool.ts
 │   │   │   ├── utils
+│   │   │   │   ├── index.ts
 │   │   │   │   ├── toolDefinition.ts
 │   │   │   │   └── toolHandlerFactory.ts
 │   │   │   └── tool-registration.ts
@@ -78,7 +78,9 @@ survey-mcp-server
 │   │   │   │   ├── httpErrorHandler.ts
 │   │   │   │   ├── httpTransport.ts
 │   │   │   │   ├── httpTypes.ts
-│   │   │   │   └── index.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── sessionIdUtils.ts
+│   │   │   │   └── sessionStore.ts
 │   │   │   ├── stdio
 │   │   │   │   ├── index.ts
 │   │   │   │   └── stdioTransport.ts
@@ -133,6 +135,9 @@ survey-mcp-server
 │   ├── types-global
 │   │   └── errors.ts
 │   ├── utils
+│   │   ├── formatting
+│   │   │   ├── index.ts
+│   │   │   └── markdownBuilder.ts
 │   │   ├── internal
 │   │   │   ├── error-handler
 │   │   │   │   ├── errorHandler.ts
@@ -155,6 +160,8 @@ survey-mcp-server
 │   │   ├── network
 │   │   │   ├── fetchWithTimeout.ts
 │   │   │   └── index.ts
+│   │   ├── pagination
+│   │   │   └── index.ts
 │   │   ├── parsing
 │   │   │   ├── csvParser.ts
 │   │   │   ├── dateParser.ts
@@ -174,11 +181,14 @@ survey-mcp-server
 │   │   ├── telemetry
 │   │   │   ├── index.ts
 │   │   │   ├── instrumentation.ts
+│   │   │   ├── metrics.ts
 │   │   │   ├── semconv.ts
 │   │   │   └── trace.ts
 │   │   └── index.ts
 │   ├── index.ts
 │   └── worker.ts
+├── storage
+│   └── responses
 ├── survey-definitions
 │   ├── employee
 │   │   └── onboarding-2025.json
@@ -190,39 +200,121 @@ survey-mcp-server
 │       └── sess_ZPQ1HY.json
 ├── tests
 │   ├── config
-│   │   └── index.int.test.ts
+│   │   ├── index.int.test.ts
+│   │   └── index.test.ts
+│   ├── container
+│   │   ├── registrations
+│   │   │   ├── core.test.ts
+│   │   │   └── mcp.test.ts
+│   │   ├── index.test.ts
+│   │   └── tokens.test.ts
 │   ├── mcp-server
 │   │   ├── resources
-│   │   │   └── definitions
-│   │   │       └── echo.resource.test.ts
+│   │   │   ├── definitions
+│   │   │   │   └── index.test.ts
+│   │   │   ├── utils
+│   │   │   │   ├── resourceDefinition.test.ts
+│   │   │   │   └── resourceHandlerFactory.test.ts
+│   │   │   └── resource-registration.test.ts
 │   │   ├── tools
-│   │   │   └── definitions
-│   │   │       ├── survey-complete-session.tool.test.ts
-│   │   │       ├── survey-export-results.tool.test.ts
-│   │   │       ├── survey-get-progress.tool.test.ts
-│   │   │       ├── survey-get-question.tool.test.ts
-│   │   │       ├── survey-list-available.tool.test.ts
-│   │   │       ├── survey-resume-session.tool.test.ts
-│   │   │       ├── survey-start-session.tool.test.ts
-│   │   │       ├── survey-submit-response.tool.test.ts
-│   │   │       └── test-utils.ts
-│   │   └── transports
-│   │       └── auth
-│   │           └── lib
-│   │               └── authUtils.test.ts
+│   │   │   ├── definitions
+│   │   │   │   ├── survey-complete-session.tool.test.ts
+│   │   │   │   ├── survey-export-results.tool.test.ts
+│   │   │   │   ├── survey-get-progress.tool.test.ts
+│   │   │   │   ├── survey-get-question.tool.test.ts
+│   │   │   │   ├── survey-list-available.tool.test.ts
+│   │   │   │   ├── survey-resume-session.tool.test.ts
+│   │   │   │   ├── survey-start-session.tool.test.ts
+│   │   │   │   ├── survey-submit-response.tool.test.ts
+│   │   │   │   └── test-utils.ts
+│   │   │   ├── utils
+│   │   │   │   ├── core
+│   │   │   │   ├── index.test.ts
+│   │   │   │   ├── toolDefinition.test.ts
+│   │   │   │   └── toolHandlerFactory.test.ts
+│   │   │   └── tool-registration.test.ts
+│   │   ├── transports
+│   │   │   ├── auth
+│   │   │   │   ├── lib
+│   │   │   │   │   ├── authContext.test.ts
+│   │   │   │   │   ├── authTypes.test.ts
+│   │   │   │   │   ├── authUtils.test.ts
+│   │   │   │   │   └── withAuth.test.ts
+│   │   │   │   ├── strategies
+│   │   │   │   │   ├── authStrategy.test.ts
+│   │   │   │   │   ├── jwtStrategy.test.ts
+│   │   │   │   │   └── oauthStrategy.test.ts
+│   │   │   │   ├── authFactory.test.ts
+│   │   │   │   ├── authMiddleware.test.ts
+│   │   │   │   └── index.test.ts
+│   │   │   ├── http
+│   │   │   │   ├── httpErrorHandler.test.ts
+│   │   │   │   ├── httpTransport.test.ts
+│   │   │   │   ├── httpTypes.test.ts
+│   │   │   │   ├── index.test.ts
+│   │   │   │   ├── sessionIdUtils.test.ts
+│   │   │   │   └── sessionStore.test.ts
+│   │   │   ├── stdio
+│   │   │   │   ├── index.test.ts
+│   │   │   │   └── stdioTransport.test.ts
+│   │   │   ├── ITransport.test.ts
+│   │   │   └── manager.test.ts
+│   │   └── server.test.ts.disabled
 │   ├── mocks
 │   │   ├── handlers.ts
 │   │   └── server.ts
+│   ├── scripts
+│   │   └── devdocs.test.ts
+│   ├── services
+│   │   ├── llm
+│   │   │   ├── core
+│   │   │   │   └── ILlmProvider.test.ts
+│   │   │   ├── providers
+│   │   │   │   ├── openrouter.provider.test.ts
+│   │   │   │   └── openrouter.provider.test.ts.disabled
+│   │   │   ├── index.test.ts
+│   │   │   └── types.test.ts
+│   │   └── speech
+│   │       ├── core
+│   │       │   ├── ISpeechProvider.test.ts
+│   │       │   └── SpeechService.test.ts
+│   │       ├── providers
+│   │       │   ├── elevenlabs.provider.test.ts
+│   │       │   └── whisper.provider.test.ts
+│   │       ├── index.test.ts
+│   │       └── types.test.ts
 │   ├── storage
+│   │   ├── core
+│   │   │   ├── IStorageProvider.test.ts
+│   │   │   ├── storageFactory.test.ts
+│   │   │   └── storageValidation.test.ts
 │   │   ├── providers
 │   │   │   ├── cloudflare
 │   │   │   │   ├── kvProvider.test.ts
 │   │   │   │   └── r2Provider.test.ts
-│   │   │   └── inMemory
-│   │   │       └── inMemoryProvider.test.ts
-│   │   └── storageProviderCompliance.test.ts
+│   │   │   ├── fileSystem
+│   │   │   │   └── fileSystemProvider.test.ts
+│   │   │   ├── inMemory
+│   │   │   │   └── inMemoryProvider.test.ts
+│   │   │   └── supabase
+│   │   │       ├── supabase.types.test.ts
+│   │   │       └── supabaseProvider.test.ts
+│   │   ├── index.test.ts
+│   │   ├── storageProviderCompliance.test.ts
+│   │   └── StorageService.test.ts
+│   ├── types-global
+│   │   └── errors.test.ts
 │   ├── utils
+│   │   ├── formatting
+│   │   │   ├── index.test.ts
+│   │   │   └── markdownBuilder.test.ts
 │   │   ├── internal
+│   │   │   ├── error-handler
+│   │   │   │   ├── errorHandler.test.ts
+│   │   │   │   ├── helpers.test.ts
+│   │   │   │   ├── index.test.ts
+│   │   │   │   ├── mappings.test.ts
+│   │   │   │   └── types.test.ts
 │   │   │   ├── encoding.test.ts
 │   │   │   ├── errorHandler.int.test.ts
 │   │   │   ├── errorHandler.unit.test.ts
@@ -231,28 +323,46 @@ survey-mcp-server
 │   │   │   ├── performance.init.test.ts
 │   │   │   ├── performance.test.ts
 │   │   │   ├── requestContext.test.ts
-│   │   │   └── runtime.test.ts
+│   │   │   ├── runtime.test.ts
+│   │   │   └── startupBanner.test.ts
 │   │   ├── metrics
+│   │   │   ├── index.test.ts
 │   │   │   ├── registry.test.ts
 │   │   │   └── tokenCounter.test.ts
 │   │   ├── network
-│   │   │   └── fetchWithTimeout.test.ts
+│   │   │   ├── fetchWithTimeout.test.ts
+│   │   │   └── index.test.ts
+│   │   ├── pagination
+│   │   │   └── index.test.ts
 │   │   ├── parsing
 │   │   │   ├── csvParser.test.ts
 │   │   │   ├── dateParser.test.ts
+│   │   │   ├── index.test.ts
 │   │   │   ├── jsonParser.test.ts
 │   │   │   ├── pdfParser.test.ts
 │   │   │   ├── xmlParser.test.ts
 │   │   │   └── yamlParser.test.ts
 │   │   ├── scheduling
+│   │   │   ├── index.test.ts
 │   │   │   └── scheduler.test.ts
-│   │   └── security
-│   │       ├── idGenerator.test.ts
-│   │       ├── rateLimiter.test.ts
-│   │       └── sanitization.test.ts
-│   └── setup.ts
+│   │   ├── security
+│   │   │   ├── idGenerator.test.ts
+│   │   │   ├── index.test.ts
+│   │   │   ├── rateLimiter.test.ts
+│   │   │   └── sanitization.test.ts
+│   │   ├── telemetry
+│   │   │   ├── index.test.ts
+│   │   │   ├── instrumentation.test.ts
+│   │   │   ├── metrics.test.ts
+│   │   │   ├── semconv.test.ts
+│   │   │   └── trace.test.ts
+│   │   └── index.test.ts
+│   ├── index.test.ts
+│   ├── setup.ts
+│   └── worker.test.ts
 ├── .dockerignore
 ├── .env.example
+├── .gitattributes
 ├── .gitignore
 ├── .prettierignore
 ├── .prettierrc.json
