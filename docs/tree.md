@@ -1,6 +1,6 @@
 # survey-mcp-server - Directory Structure
 
-Generated on: 2025-10-15 18:16:15
+Generated on: 2025-10-16 13:09:03
 
 ```
 survey-mcp-server
@@ -16,6 +16,192 @@ survey-mcp-server
 │   └── settings.json
 ├── changelog
 │   └── archive1.md
+├── coverage
+│   ├── src
+│   │   ├── config
+│   │   │   ├── index.html
+│   │   │   └── index.ts.html
+│   │   ├── container
+│   │   │   ├── registrations
+│   │   │   │   ├── core.ts.html
+│   │   │   │   ├── index.html
+│   │   │   │   └── mcp.ts.html
+│   │   │   ├── index.html
+│   │   │   ├── index.ts.html
+│   │   │   └── tokens.ts.html
+│   │   ├── mcp-server
+│   │   │   ├── resources
+│   │   │   │   ├── utils
+│   │   │   │   │   ├── index.html
+│   │   │   │   │   ├── resourceDefinition.ts.html
+│   │   │   │   │   └── resourceHandlerFactory.ts.html
+│   │   │   │   ├── index.html
+│   │   │   │   └── resource-registration.ts.html
+│   │   │   ├── tools
+│   │   │   │   ├── definitions
+│   │   │   │   │   ├── index.html
+│   │   │   │   │   ├── survey-complete-session.tool.ts.html
+│   │   │   │   │   ├── survey-export-results.tool.ts.html
+│   │   │   │   │   ├── survey-get-progress.tool.ts.html
+│   │   │   │   │   ├── survey-get-question.tool.ts.html
+│   │   │   │   │   ├── survey-list-available.tool.ts.html
+│   │   │   │   │   ├── survey-resume-session.tool.ts.html
+│   │   │   │   │   ├── survey-start-session.tool.ts.html
+│   │   │   │   │   └── survey-submit-response.tool.ts.html
+│   │   │   │   ├── utils
+│   │   │   │   │   ├── index.html
+│   │   │   │   │   ├── toolDefinition.ts.html
+│   │   │   │   │   └── toolHandlerFactory.ts.html
+│   │   │   │   ├── index.html
+│   │   │   │   └── tool-registration.ts.html
+│   │   │   ├── transports
+│   │   │   │   ├── auth
+│   │   │   │   │   ├── lib
+│   │   │   │   │   │   ├── authContext.ts.html
+│   │   │   │   │   │   ├── authTypes.ts.html
+│   │   │   │   │   │   ├── authUtils.ts.html
+│   │   │   │   │   │   ├── index.html
+│   │   │   │   │   │   └── withAuth.ts.html
+│   │   │   │   │   ├── strategies
+│   │   │   │   │   │   ├── authStrategy.ts.html
+│   │   │   │   │   │   ├── index.html
+│   │   │   │   │   │   ├── jwtStrategy.ts.html
+│   │   │   │   │   │   └── oauthStrategy.ts.html
+│   │   │   │   │   ├── authFactory.ts.html
+│   │   │   │   │   ├── authMiddleware.ts.html
+│   │   │   │   │   └── index.html
+│   │   │   │   ├── http
+│   │   │   │   │   ├── httpErrorHandler.ts.html
+│   │   │   │   │   ├── httpTransport.ts.html
+│   │   │   │   │   ├── httpTypes.ts.html
+│   │   │   │   │   ├── index.html
+│   │   │   │   │   ├── sessionIdUtils.ts.html
+│   │   │   │   │   └── sessionStore.ts.html
+│   │   │   │   ├── stdio
+│   │   │   │   │   ├── index.html
+│   │   │   │   │   └── stdioTransport.ts.html
+│   │   │   │   ├── index.html
+│   │   │   │   ├── ITransport.ts.html
+│   │   │   │   └── manager.ts.html
+│   │   │   ├── index.html
+│   │   │   └── server.ts.html
+│   │   ├── services
+│   │   │   ├── llm
+│   │   │   │   ├── core
+│   │   │   │   │   ├── ILlmProvider.ts.html
+│   │   │   │   │   └── index.html
+│   │   │   │   ├── providers
+│   │   │   │   │   ├── index.html
+│   │   │   │   │   └── openrouter.provider.ts.html
+│   │   │   │   ├── index.html
+│   │   │   │   └── types.ts.html
+│   │   │   ├── speech
+│   │   │   │   ├── core
+│   │   │   │   │   ├── index.html
+│   │   │   │   │   ├── ISpeechProvider.ts.html
+│   │   │   │   │   └── SpeechService.ts.html
+│   │   │   │   ├── providers
+│   │   │   │   │   ├── elevenlabs.provider.ts.html
+│   │   │   │   │   ├── index.html
+│   │   │   │   │   └── whisper.provider.ts.html
+│   │   │   │   ├── index.html
+│   │   │   │   └── types.ts.html
+│   │   │   └── survey
+│   │   │       ├── core
+│   │   │       │   ├── index.html
+│   │   │       │   ├── ISurveyProvider.ts.html
+│   │   │       │   ├── SurveyService.ts.html
+│   │   │       │   └── validation.ts.html
+│   │   │       ├── providers
+│   │   │       │   ├── filesystem.provider.ts.html
+│   │   │       │   └── index.html
+│   │   │       ├── index.html
+│   │   │       └── types.ts.html
+│   │   ├── storage
+│   │   │   ├── core
+│   │   │   │   ├── index.html
+│   │   │   │   ├── IStorageProvider.ts.html
+│   │   │   │   ├── storageFactory.ts.html
+│   │   │   │   ├── StorageService.ts.html
+│   │   │   │   └── storageValidation.ts.html
+│   │   │   └── providers
+│   │   │       ├── cloudflare
+│   │   │       │   ├── index.html
+│   │   │       │   ├── kvProvider.ts.html
+│   │   │       │   └── r2Provider.ts.html
+│   │   │       ├── fileSystem
+│   │   │       │   ├── fileSystemProvider.ts.html
+│   │   │       │   └── index.html
+│   │   │       ├── inMemory
+│   │   │       │   ├── index.html
+│   │   │       │   └── inMemoryProvider.ts.html
+│   │   │       └── supabase
+│   │   │           ├── index.html
+│   │   │           ├── supabase.types.ts.html
+│   │   │           └── supabaseProvider.ts.html
+│   │   ├── types-global
+│   │   │   ├── errors.ts.html
+│   │   │   └── index.html
+│   │   ├── utils
+│   │   │   ├── formatting
+│   │   │   │   ├── index.html
+│   │   │   │   └── markdownBuilder.ts.html
+│   │   │   ├── internal
+│   │   │   │   ├── error-handler
+│   │   │   │   │   ├── errorHandler.ts.html
+│   │   │   │   │   ├── helpers.ts.html
+│   │   │   │   │   ├── index.html
+│   │   │   │   │   ├── mappings.ts.html
+│   │   │   │   │   └── types.ts.html
+│   │   │   │   ├── encoding.ts.html
+│   │   │   │   ├── health.ts.html
+│   │   │   │   ├── index.html
+│   │   │   │   ├── logger.ts.html
+│   │   │   │   ├── performance.ts.html
+│   │   │   │   ├── requestContext.ts.html
+│   │   │   │   ├── runtime.ts.html
+│   │   │   │   └── startupBanner.ts.html
+│   │   │   ├── metrics
+│   │   │   │   ├── index.html
+│   │   │   │   ├── registry.ts.html
+│   │   │   │   └── tokenCounter.ts.html
+│   │   │   ├── network
+│   │   │   │   ├── fetchWithTimeout.ts.html
+│   │   │   │   └── index.html
+│   │   │   ├── parsing
+│   │   │   │   ├── csvParser.ts.html
+│   │   │   │   ├── dateParser.ts.html
+│   │   │   │   ├── index.html
+│   │   │   │   ├── jsonParser.ts.html
+│   │   │   │   ├── pdfParser.ts.html
+│   │   │   │   ├── xmlParser.ts.html
+│   │   │   │   └── yamlParser.ts.html
+│   │   │   ├── scheduling
+│   │   │   │   ├── index.html
+│   │   │   │   └── scheduler.ts.html
+│   │   │   ├── security
+│   │   │   │   ├── idGenerator.ts.html
+│   │   │   │   ├── index.html
+│   │   │   │   ├── rateLimiter.ts.html
+│   │   │   │   └── sanitization.ts.html
+│   │   │   └── telemetry
+│   │   │       ├── index.html
+│   │   │       ├── instrumentation.ts.html
+│   │   │       ├── metrics.ts.html
+│   │   │       ├── semconv.ts.html
+│   │   │       └── trace.ts.html
+│   │   ├── index.html
+│   │   ├── index.ts.html
+│   │   └── worker.ts.html
+│   ├── base.css
+│   ├── block-navigation.js
+│   ├── coverage-final.json
+│   ├── favicon.png
+│   ├── index.html
+│   ├── prettify.css
+│   ├── prettify.js
+│   ├── sort-arrow-sprite.png
+│   └── sorter.js
 ├── docs
 │   ├── survey-mcp-server-spec.md
 │   └── tree.md
@@ -26,6 +212,7 @@ survey-mcp-server
 │   ├── fetch-openapi-spec.ts
 │   ├── make-executable.ts
 │   ├── tree.ts
+│   ├── update-coverage.ts
 │   └── validate-mcp-publish-schema.ts
 ├── src
 │   ├── config

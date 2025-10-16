@@ -5,7 +5,7 @@
 
 <div align="center">
 
-[![Version](https://img.shields.io/badge/Version-1.0.5-blue.svg?style=flat-square)](./CHANGELOG.md) [![MCP Spec](https://img.shields.io/badge/MCP%20Spec-2025--06--18-8A2BE2.svg?style=flat-square)](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/docs/specification/2025-06-18/changelog.mdx) [![MCP SDK](https://img.shields.io/badge/MCP%20SDK-^1.20.0-green.svg?style=flat-square)](https://modelcontextprotocol.io/) [![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg?style=flat-square)](./LICENSE) [![Status](https://img.shields.io/badge/Status-In%20Development-yellow.svg?style=flat-square)](https://github.com/cyanheads/survey-mcp-server/issues) [![TypeScript](https://img.shields.io/badge/TypeScript-^5.9.3-3178C6.svg?style=flat-square)](https://www.typescriptlang.org/) [![Bun](https://img.shields.io/badge/Bun-v1.3.0-blueviolet.svg?style=flat-square)](https://bun.sh/) [![Code Coverage](https://img.shields.io/badge/Coverage-67.82%25-yellow.svg?style=flat-square)](./coverage/index.html)
+[![Version](https://img.shields.io/badge/Version-1.0.6-blue.svg?style=flat-square)](./CHANGELOG.md) [![MCP Spec](https://img.shields.io/badge/MCP%20Spec-2025--06--18-8A2BE2.svg?style=flat-square)](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/docs/specification/2025-06-18/changelog.mdx) [![MCP SDK](https://img.shields.io/badge/MCP%20SDK-^1.20.0-green.svg?style=flat-square)](https://modelcontextprotocol.io/) [![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg?style=flat-square)](./LICENSE) [![Status](https://img.shields.io/badge/Status-In%20Development-yellow.svg?style=flat-square)](https://github.com/cyanheads/survey-mcp-server/issues) [![TypeScript](https://img.shields.io/badge/TypeScript-^5.9.3-3178C6.svg?style=flat-square)](https://www.typescriptlang.org/) [![Bun](https://img.shields.io/badge/Bun-v1.3.0-blueviolet.svg?style=flat-square)](https://bun.sh/) [![Code Coverage](https://img.shields.io/badge/Coverage-67.82%25-yellow.svg?style=flat-square)](./coverage/index.html)
 
 </div>
 
@@ -15,16 +15,16 @@
 
 This server provides eight powerful tools for managing the complete survey lifecycle with LLM-driven interactions:
 
-| Tool Name                 | Description                                                                                            |
-| :------------------------ | :----------------------------------------------------------------------------------------------------- |
-| `survey_list_available`   | Discover available surveys in the definitions directory.                                               |
-| `survey_start_session`    | Initialize a new session with complete survey context, all questions, and initial suggested questions. |
-| `survey_get_question`     | Refresh a specific question's eligibility status after state changes (useful for conditional logic).   |
-| `survey_submit_response`  | Record participant answers with validation, returning updated progress and next suggested questions.   |
-| `survey_get_progress`     | Check completion status, remaining required/optional questions, and completion eligibility.            |
-| `survey_complete_session` | Finalize a completed session (requires all required questions answered).                               |
-| `survey_export_results`   | Export session data in CSV or JSON format with optional filtering by status, date range, etc.          |
-| `survey_resume_session`   | Resume an incomplete session, restoring full context including answered questions and progress.        |
+| Tool Name                 | Description                                                                                                   |
+| :------------------------ | :------------------------------------------------------------------------------------------------------------ |
+| `survey_list_available`   | Discover available surveys in the definitions directory.                                                      |
+| `survey_start_session`    | Initialize a new session with complete survey context, all questions, and initial suggested questions.        |
+| `survey_get_question`     | Refresh a specific question's eligibility status after state changes (useful for conditional logic).          |
+| `survey_submit_response`  | Record participant answers with validation, scoring, returning updated progress and next suggested questions. |
+| `survey_get_progress`     | Check completion status, current score, remaining required/optional questions, and completion eligibility.    |
+| `survey_complete_session` | Finalize a completed session with final score summary (requires all required questions answered).             |
+| `survey_export_results`   | Export session data in CSV or JSON format with optional filtering by status, date range, etc.                 |
+| `survey_resume_session`   | Resume an incomplete session, restoring full context including answered questions and progress.               |
 
 ### `survey_list_available`
 
@@ -52,7 +52,7 @@ This server provides eight powerful tools for managing the complete survey lifec
 
 - Creates new session with unique session ID and participant tracking
 - Loads complete survey definition with all questions upfront
-- Returns initial 3-5 suggested questions based on eligibility (unconditional questions first, required before optional)
+- Returns initial suggested questions based on survey settings (configurable min/max, defaults to 3-5) based on eligibility (unconditional questions first, required before optional)
 - Each question includes `currentlyEligible` flag and `eligibilityReason` for transparency
 - Provides `guidanceForLLM` field with conversational instructions
 - Supports session metadata for tracking source, user agent, etc.
@@ -91,10 +91,11 @@ This server provides eight powerful tools for managing the complete survey lifec
 **Key Features:**
 
 - Validates responses against question constraints (min/max length, patterns, required fields, etc.)
+- Calculates and returns score for response (if scoring is enabled on question options)
 - Returns validation errors with specific, actionable feedback
-- Updates session progress (percentage complete, questions answered, time remaining estimate)
+- Updates session progress (percentage complete, questions answered, time remaining estimate, current score)
 - Returns `updatedEligibility` array showing newly available conditional questions
-- Provides 3-5 refreshed `nextSuggestedQuestions` based on new state
+- Provides refreshed `nextSuggestedQuestions` based on new state (count configurable per survey)
 - Includes `guidanceForLLM` with context-aware instructions
 
 **Example Use Cases:**
@@ -112,7 +113,7 @@ This server provides eight powerful tools for managing the complete survey lifec
 **Key Features:**
 
 - Returns completion status: `in-progress`, `completed`, `abandoned`
-- Progress metrics: total questions, answered count, required remaining, percentage complete
+- Progress metrics: total questions, answered count, required remaining, percentage complete, current score
 - Lists all unanswered required questions (with eligibility status)
 - Lists all unanswered optional questions (with eligibility status)
 - `canComplete` boolean indicating if session can be finalized
@@ -134,7 +135,7 @@ This server provides eight powerful tools for managing the complete survey lifec
 
 - Validates that all required questions (including conditionally required) are answered
 - Updates session status to `completed` and sets `completedAt` timestamp
-- Returns summary with total questions answered and session duration
+- Returns summary with total questions answered, session duration, and final score (if scoring enabled)
 - Prevents duplicate completion
 
 **Example Use Cases:**
@@ -173,9 +174,9 @@ This server provides eight powerful tools for managing the complete survey lifec
 
 - Restores complete survey context and session state
 - Returns all previously answered questions with responses
-- Provides 3-5 refreshed `nextSuggestedQuestions` for remaining questions
+- Provides refreshed `nextSuggestedQuestions` for remaining questions (count configurable per survey)
 - Shows elapsed time since last activity
-- Current progress summary (percentage, remaining questions)
+- Current progress summary (percentage, remaining questions, current score)
 - Includes `guidanceForLLM` with welcome-back messaging suggestions
 
 **Example Use Cases:**
@@ -198,14 +199,16 @@ This server is built on the [`mcp-ts-template`](https://github.com/cyanheads/mcp
 
 Plus, specialized features for **Survey Management**:
 
-- **LLM-Driven Surveys**: Tools provide rich context (progress, next suggested questions, validation results) to guide natural conversation flow.
-- **Hybrid Flow Control**: Guided mode with 3-5 suggested questions + flexible ordering based on conversation context.
-- **Advanced Conditional Logic**: Support for simple skip logic and complex `AND`/`OR` multi-condition branching.
+- **LLM-Driven Surveys**: Tools provide rich context (progress, next suggested questions, validation results, scores) to guide natural conversation flow.
+- **Hybrid Flow Control**: Guided mode with configurable suggested questions (defaults to 3-5) + flexible ordering based on conversation context.
+- **Scoring System**: Support for quizzes and assessments with optional score fields on question options. Automatic score calculation and accumulation per session.
+- **Advanced Conditional Logic**: Support for simple skip logic and complex `AND`/`OR` multi-condition branching with eligibility tracking.
 - **JSON-Based Survey Definitions**: Define surveys in simple JSON files with recursive directory scanning.
 - **Multiple Question Types**: `free-form`, `multiple-choice`, `multiple-select`, `rating-scale`, `email`, `number`, `boolean`, and advanced types like `date`, `datetime`, `time`, and `matrix` grids.
-- **Validation Engine**: Min/max length, patterns, required fields, custom constraints, and date/time rules.
+- **Validation Engine**: Min/max length, patterns, required fields, custom constraints, and date/time rules with extensible validator map pattern.
 - **Session Resume**: Built-in state management allows participants to pause and continue later.
 - **Help Text**: A `helpText` field on questions provides LLMs with context and guidance for asking questions naturally.
+- **Pagination Support**: Scalable data retrieval with configurable pagination for session queries and exports.
 
 ## 🚀 Getting Started
 
@@ -272,6 +275,7 @@ This server equips AI agents with specialized tools to conduct dynamic, conversa
 
 3. For each answer, LLM calls survey_submit_response
    → Receives validation feedback (re-prompts if needed)
+   → Gets score for response (if scoring enabled): "+5 points (Total: 45)"
    → Gets progress update (50% complete, 2 of 4 questions answered)
    → Refreshed suggestions with newly eligible conditional questions
 
@@ -280,7 +284,7 @@ This server equips AI agents with specialized tools to conduct dynamic, conversa
    → Understands what remains before completion is possible
 
 5. When all required questions answered, LLM calls survey_complete_session
-   → Session finalized with timestamp and summary
+   → Session finalized with timestamp, summary, and final score
    → Ready for export via survey_export_results
 ```
 

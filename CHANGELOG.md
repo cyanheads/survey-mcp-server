@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.6] - 2025-10-16
+
+### Added
+
+- **Scoring System**: Implemented comprehensive scoring support for quizzes and assessments:
+  - Added `score` field to question options for multiple-choice and multiple-select questions
+  - Automatic score calculation and accumulation per session (`currentScore` field)
+  - Score display in response formatters with visual indicators (🎯 emoji)
+  - Final score summary in completion tools
+- **Pagination Support**: Added configurable pagination to `getSessionsBySurvey` method with `page` and `pageSize` parameters for scalable data retrieval
+- **Configurable Suggestion Strategy**: Survey settings now include `suggestionStrategy` object with configurable `min` and `max` parameters (defaults to 3-5 questions)
+- **Validator Map Pattern**: Implemented extensible validator map pattern in validation module for cleaner code and easier addition of new question type validators
+
+### Changed
+
+- **File Synchronization**: Converted `.clinerules/AGENTS.md` and `CLAUDE.md` from regular files to symlinks pointing to root `AGENTS.md` for better maintainability
+- **Response Formatters**: Enhanced all survey tool response formatters with score information display:
+  - `survey_submit_response`: Shows points awarded (+5) and current total score
+  - `survey_get_progress`: Displays current accumulated score
+  - `survey_complete_session`: Includes final score in completion summary
+- **Survey Service**: Updated suggestion logic to use survey-specific `suggestionStrategy` settings instead of hardcoded 3-5 range
+- **Session Schema**: Added `currentScore` field to `ParticipantSession` and `SurveyResponse` schemas
+- **Analytics**: Refactored `getAnalytics` to return strongly-typed `SurveyAnalytics` interface
+- **Dependencies**: Updated `@types/node` from 24.7.2 to 24.8.0
+- **Documentation**: Updated `AGENTS.md` with enhanced scoring examples in response formatter best practices
+
+### Fixed
+
+- **Validation Robustness**: Added graceful handling for unimplemented validators with console warnings instead of silent failures
+- **Score Calculation**: Properly handles score accumulation for multiple-select questions by summing individual option scores
+
 ## [1.0.5] - 2025-10-15
 
 ### Changed
