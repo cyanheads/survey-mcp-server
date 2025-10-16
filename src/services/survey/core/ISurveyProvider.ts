@@ -8,6 +8,7 @@ import type {
   ExportFilters,
   ExportFormat,
   ParticipantSession,
+  SurveyAnalytics,
   SurveyDefinition,
 } from '../types.js';
 
@@ -66,17 +67,19 @@ export interface ISurveyProvider {
   updateSession(session: ParticipantSession): Promise<ParticipantSession>;
 
   /**
-   * Get all sessions for a specific survey (used for export).
+   * Get all sessions for a specific survey with pagination.
    * @param surveyId Survey identifier
    * @param tenantId Tenant identifier
    * @param filters Optional filters for date range, status, etc.
-   * @returns Array of matching sessions
+   * @param pagination Optional pagination parameters
+   * @returns Paginated list of matching sessions and total count
    */
   getSessionsBySurvey(
     surveyId: string,
     tenantId: string,
     filters?: ExportFilters,
-  ): Promise<ParticipantSession[]>;
+    pagination?: { page: number; pageSize: number },
+  ): Promise<{ sessions: ParticipantSession[]; total: number }>;
 
   /**
    * Export survey results in the specified format.
@@ -99,21 +102,7 @@ export interface ISurveyProvider {
    * @param tenantId Tenant identifier
    * @returns Analytics summary with completion stats, response distributions, etc.
    */
-  getAnalytics?(
-    surveyId: string,
-    tenantId: string,
-  ): Promise<{
-    totalSessions: number;
-    completedSessions: number;
-    inProgressSessions: number;
-    abandonedSessions: number;
-    averageCompletionTime?: string;
-    questionStats: Array<{
-      questionId: string;
-      responseCount: number;
-      responseDistribution?: Record<string, number>;
-    }>;
-  }>;
+  getAnalytics(surveyId: string, tenantId: string): Promise<SurveyAnalytics>;
 
   /**
    * Health check for the provider.

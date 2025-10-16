@@ -38,6 +38,7 @@ import type {
   ExportFilters,
   ExportFormat,
   ParticipantSession,
+  SurveyAnalytics,
   SurveyDefinition,
 } from '../types.js';
 import { ParticipantSessionSchema, SurveyDefinitionSchema } from '../types.js';
@@ -263,7 +264,7 @@ export class FilesystemSurveyProvider implements ISurveyProvider {
   }
 
   /**
-   * Get all sessions for a survey (with optional filters).
+   * Get all sessions for a survey (with optional filters and pagination).
    * Scans tenant directory and filters by survey ID, status, date range, etc.
    * This directory-level scanning with in-memory filtering is domain-specific
    * and not suited to generic StorageService's key-based access pattern.
@@ -272,13 +273,14 @@ export class FilesystemSurveyProvider implements ISurveyProvider {
     surveyId: string,
     tenantId: string,
     filters?: ExportFilters,
-  ): Promise<ParticipantSession[]> {
+    pagination: { page: number; pageSize: number } = { page: 1, pageSize: 50 },
+  ): Promise<{ sessions: ParticipantSession[]; total: number }> {
     this.ensureInitialized();
 
     const tenantDir = join(this.responsesPath, tenantId);
 
     if (!existsSync(tenantDir)) {
-      return [];
+      return { sessions: [], total: 0 };
     }
 
     const sessions: ParticipantSession[] = [];
@@ -331,7 +333,13 @@ export class FilesystemSurveyProvider implements ISurveyProvider {
       }
     }
 
-    return sessions;
+    // Apply pagination
+    const total = sessions.length;
+    const start = (pagination.page - 1) * pagination.pageSize;
+    const end = start + pagination.pageSize;
+    const paginatedSessions = sessions.slice(start, end);
+
+    return { sessions: paginatedSessions, total };
   }
 
   /**
@@ -348,10 +356,12 @@ export class FilesystemSurveyProvider implements ISurveyProvider {
   ): Promise<{ data: string; recordCount: number }> {
     this.ensureInitialized();
 
-    const sessions = await this.getSessionsBySurvey(
+    // For export, fetch all sessions by using a large page size
+    const { sessions } = await this.getSessionsBySurvey(
       surveyId,
       tenantId,
       filters,
+      { page: 1, pageSize: 10000 },
     );
 
     if (format === 'json') {
@@ -434,21 +444,16 @@ export class FilesystemSurveyProvider implements ISurveyProvider {
   async getAnalytics(
     surveyId: string,
     tenantId: string,
-  ): Promise<{
-    totalSessions: number;
-    completedSessions: number;
-    inProgressSessions: number;
-    abandonedSessions: number;
-    averageCompletionTime?: string;
-    questionStats: Array<{
-      questionId: string;
-      responseCount: number;
-      responseDistribution?: Record<string, number>;
-    }>;
-  }> {
+  ): Promise<SurveyAnalytics> {
     this.ensureInitialized();
 
-    const sessions = await this.getSessionsBySurvey(surveyId, tenantId);
+    // Fetch all sessions for analytics (use large page size)
+    const { sessions } = await this.getSessionsBySurvey(
+      surveyId,
+      tenantId,
+      undefined,
+      { page: 1, pageSize: 10000 },
+    );
     const survey = await this.getSurveyById(surveyId, tenantId);
 
     if (!survey) {
