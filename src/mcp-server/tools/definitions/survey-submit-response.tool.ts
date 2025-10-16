@@ -121,15 +121,11 @@ async function submitResponseLogic(
     };
   }
 
-  // Success - extract score information from the session
+  // Success - extract score information from the service response
   const eligibilityChanges = result.updatedEligibility || [];
   const newlyAvailable = eligibilityChanges.filter((c) => c.nowEligible);
-
-  // Get score info from the stored response (service doesn't return it directly yet)
-  // We'll need to access the session to get currentScore
-  const session = await surveyService.getProgress(input.sessionId, tenantId);
-  const responseScore = session.session.responses[input.questionId]?.score;
-  const currentScore = session.session.currentScore;
+  const responseScore = result.score;
+  const currentScore = result.currentScore;
 
   let guidance = `Response recorded successfully. Progress updated to ${result.progress?.percentComplete}%.`;
 

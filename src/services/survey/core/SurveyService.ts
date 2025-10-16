@@ -188,6 +188,8 @@ export class SurveyService {
     progress?: SessionProgress;
     updatedEligibility?: EligibilityChange[];
     nextSuggestedQuestions?: EnrichedQuestion[];
+    score?: number;
+    currentScore?: number;
   }> {
     const session = await this.getSessionOrThrow(sessionId, tenantId);
     const survey = await this.getSurveyOrThrow(session.surveyId, tenantId);
@@ -336,6 +338,10 @@ export class SurveyService {
       progress: session.progress,
       updatedEligibility,
       nextSuggestedQuestions,
+      ...(responseScore !== undefined && { score: responseScore }),
+      ...(updatedSession.currentScore !== undefined && {
+        currentScore: updatedSession.currentScore,
+      }),
     };
   }
 
