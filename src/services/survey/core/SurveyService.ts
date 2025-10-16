@@ -101,6 +101,7 @@ export class SurveyService {
         requiredRemaining: survey.questions.filter((q) => q.required).length,
         percentComplete: 0,
       },
+      currentScore: 0,
     };
 
     const createdSession = await this.provider.createSession(session);
@@ -111,11 +112,12 @@ export class SurveyService {
       createdSession,
     );
 
-    // Get initial suggested questions (3-5 eligible questions)
+    // Get initial suggested questions using survey settings
+    const { min, max } = survey.settings.suggestionStrategy;
     const nextSuggestedQuestions = this.getNextSuggestedQuestions(
       allQuestions,
-      3,
-      5,
+      min,
+      max,
     );
 
     logger.info('Started survey session', {
@@ -245,14 +247,48 @@ export class SurveyService {
       }),
     );
 
+    // Calculate score for this response
+    let responseScore: number | undefined;
+    if (question.type === 'multiple-choice' && question.options) {
+      const selectedOption = question.options.find(
+        (opt) => opt.value === value,
+      );
+      if (selectedOption?.score !== undefined) {
+        responseScore = selectedOption.score;
+      }
+    } else if (
+      question.type === 'multiple-select' &&
+      question.options &&
+      Array.isArray(value)
+    ) {
+      responseScore = value.reduce((total: number, val: unknown) => {
+        if (typeof val !== 'string') {
+          return total;
+        }
+        const selectedOption = question.options?.find(
+          (opt) => opt.value === val,
+        );
+        return total + (selectedOption?.score ?? 0);
+      }, 0);
+    }
+    // NOTE: Scoring for other question types can be added here if needed.
+
     // Record response
-    const attemptCount = session.responses[questionId]?.attemptCount || 0;
+    const previousResponse = session.responses[questionId];
+    const attemptCount = previousResponse?.attemptCount || 0;
     session.responses[questionId] = {
       questionId,
       value,
       answeredAt: new Date().toISOString(),
       attemptCount: attemptCount + 1,
+      score: responseScore,
     };
+
+    // Recalculate total session score
+    session.currentScore = Object.values(session.responses).reduce(
+      (total, response) => total + (response.score ?? 0),
+      0,
+    );
 
     // Update progress
     session.lastActivityAt = new Date().toISOString();
@@ -280,15 +316,16 @@ export class SurveyService {
       }
     });
 
-    // Get next suggested questions
+    // Get next suggested questions using survey settings
     const allEnrichedQuestions = this.enrichQuestionsWithEligibility(
       survey.questions,
       updatedSession,
     );
+    const { min, max } = survey.settings.suggestionStrategy;
     const nextSuggestedQuestions = this.getNextSuggestedQuestions(
       allEnrichedQuestions,
-      3,
-      5,
+      min,
+      max,
     );
 
     logger.debug('Submitted survey response');
@@ -459,15 +496,16 @@ export class SurveyService {
       };
     });
 
-    // Get next suggested questions
+    // Get next suggested questions using survey settings
     const allQuestions = this.enrichQuestionsWithEligibility(
       survey.questions,
       session,
     );
+    const { min, max } = survey.settings.suggestionStrategy;
     const nextSuggestedQuestions = this.getNextSuggestedQuestions(
       allQuestions,
-      3,
-      5,
+      min,
+      max,
     );
 
     // Update last activity
@@ -537,14 +575,6 @@ export class SurveyService {
       responseDistribution?: Record<string, number>;
     }>;
   }> {
-    // Check if provider supports analytics
-    if (!this.provider.getAnalytics) {
-      throw new McpError(
-        JsonRpcErrorCode.InternalError,
-        'Analytics not supported by current provider',
-      );
-    }
-
     const survey = await this.getSurveyOrThrow(surveyId, tenantId);
     const analyticsData = await this.provider.getAnalytics(surveyId, tenantId);
 
@@ -563,9 +593,13 @@ export class SurveyService {
           : '0%';
 
       return {
-        ...stat,
+        questionId: stat.questionId,
         questionText: question?.text || 'Unknown question',
+        responseCount: stat.responseCount,
         responseRate,
+        ...(stat.responseDistribution && {
+          responseDistribution: stat.responseDistribution,
+        }),
       };
     });
 

@@ -31,6 +31,10 @@ export type QuestionType = z.infer<typeof QuestionTypeSchema>;
 export const QuestionOptionSchema = z.object({
   value: z.string().describe('Programmatic value for the option'),
   label: z.string().describe('Human-readable label displayed to users'),
+  score: z
+    .number()
+    .optional()
+    .describe('Points awarded for selecting this option'),
 });
 
 export type QuestionOption = z.infer<typeof QuestionOptionSchema>;
@@ -231,6 +235,21 @@ export const SurveySettingsSchema = z.object({
     .int()
     .optional()
     .describe('Maximum validation attempts per question'),
+  suggestionStrategy: z
+    .object({
+      min: z
+        .number()
+        .int()
+        .default(3)
+        .describe('Minimum number of questions to suggest'),
+      max: z
+        .number()
+        .int()
+        .default(5)
+        .describe('Maximum number of questions to suggest'),
+    })
+    .default({ min: 3, max: 5 })
+    .describe('Configuration for suggesting next questions'),
 });
 
 export type SurveySettings = z.infer<typeof SurveySettingsSchema>;
@@ -297,6 +316,7 @@ export const SurveyResponseSchema = z.object({
     .int()
     .default(1)
     .describe('Number of validation attempts'),
+  score: z.number().optional().describe('Score awarded for this response'),
 });
 
 export type SurveyResponse = z.infer<typeof SurveyResponseSchema>;
@@ -366,6 +386,10 @@ export const ParticipantSessionSchema = z.object({
     .record(SurveyResponseSchema)
     .describe('Map of questionId to response'),
   progress: SessionProgressSchema.describe('Current progress metrics'),
+  currentScore: z
+    .number()
+    .default(0)
+    .describe('Total accumulated score for the session'),
 });
 
 export type ParticipantSession = z.infer<typeof ParticipantSessionSchema>;
@@ -449,6 +473,37 @@ export const ExportFiltersSchema = z.object({
 });
 
 export type ExportFilters = z.infer<typeof ExportFiltersSchema>;
+
+/**
+ * Analytics summary for a survey.
+ */
+export const SurveyAnalyticsSchema = z.object({
+  totalSessions: z.number().int().describe('Total number of sessions'),
+  completedSessions: z.number().int().describe('Number of completed sessions'),
+  inProgressSessions: z
+    .number()
+    .int()
+    .describe('Number of in-progress sessions'),
+  abandonedSessions: z.number().int().describe('Number of abandoned sessions'),
+  averageCompletionTime: z
+    .string()
+    .optional()
+    .describe('Average time to complete survey'),
+  questionStats: z
+    .array(
+      z.object({
+        questionId: z.string().describe('Question identifier'),
+        responseCount: z.number().int().describe('Number of responses'),
+        responseDistribution: z
+          .record(z.number().int())
+          .optional()
+          .describe('Distribution of response values'),
+      }),
+    )
+    .describe('Statistics for each question'),
+});
+
+export type SurveyAnalytics = z.infer<typeof SurveyAnalyticsSchema>;
 
 /**
  * Completion blocker information.

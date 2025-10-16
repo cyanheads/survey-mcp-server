@@ -28,7 +28,7 @@ import { logger } from '@/utils/index.js';
 const TOOL_NAME = 'survey_submit_response';
 const TOOL_TITLE = 'Submit Survey Response';
 const TOOL_DESCRIPTION =
-  "Record a participant's answer to a survey question. Validates the response against question rules, updates session progress, detects eligibility changes for conditional questions, and returns updated question suggestions. If validation fails, re-prompt the participant with the specific guidance provided.";
+  "Record a participant's answer to a survey question. Validates the response against question rules, calculates scores for quiz/assessment questions, updates session progress, detects eligibility changes for conditional questions, and returns updated question suggestions. If validation fails, re-prompt the participant with the specific guidance provided.";
 
 const TOOL_ANNOTATIONS: ToolAnnotations = {
   readOnlyHint: false,
@@ -54,6 +54,16 @@ const OutputSchema = z
       .boolean()
       .describe('Whether the response was successfully recorded'),
     validation: ValidationResultSchema.describe('Validation result details'),
+    score: z
+      .number()
+      .optional()
+      .describe('Points awarded for this response (if scoring is enabled)'),
+    currentScore: z
+      .number()
+      .optional()
+      .describe(
+        'Total accumulated score for the session (if scoring is enabled)',
+      ),
     progress: SessionProgressSchema.optional().describe(
       'Updated session progress (only if submission succeeded)',
     ),
@@ -111,9 +121,15 @@ async function submitResponseLogic(
     };
   }
 
-  // Success
+  // Success - extract score information from the session
   const eligibilityChanges = result.updatedEligibility || [];
   const newlyAvailable = eligibilityChanges.filter((c) => c.nowEligible);
+
+  // Get score info from the stored response (service doesn't return it directly yet)
+  // We'll need to access the session to get currentScore
+  const session = await surveyService.getProgress(input.sessionId, tenantId);
+  const responseScore = session.session.responses[input.questionId]?.score;
+  const currentScore = session.session.currentScore;
 
   let guidance = `Response recorded successfully. Progress updated to ${result.progress?.percentComplete}%.`;
 
@@ -129,11 +145,14 @@ async function submitResponseLogic(
     ...appContext,
     questionId: input.questionId,
     progress: result.progress?.percentComplete,
+    score: responseScore,
   });
 
   return {
     success: true,
     validation: result.validation,
+    score: responseScore,
+    currentScore,
     progress: result.progress,
     updatedEligibility: eligibilityChanges,
     nextSuggestedQuestions: result.nextSuggestedQuestions,
@@ -163,6 +182,12 @@ function responseFormatter(result: SubmitResponseResponse): ContentBlock[] {
   const progress = result.progress
     ? `${progressBar} ${result.progress.percentComplete}% (${result.progress.answeredQuestions}/${result.progress.totalQuestions} questions)`
     : '';
+
+  // Score display (if scoring is enabled)
+  const scoreSection =
+    result.score !== undefined || result.currentScore !== undefined
+      ? `\n\n🎯 Score: ${result.score !== undefined ? `+${result.score}` : '0'} points${result.currentScore !== undefined ? ` (Total: ${result.currentScore})` : ''}`
+      : '';
 
   // Newly unlocked questions with details
   const newlyUnlocked =
@@ -210,7 +235,7 @@ function responseFormatter(result: SubmitResponseResponse): ContentBlock[] {
   return [
     {
       type: 'text',
-      text: `✓ Response Recorded\n\nProgress: ${progress}${newQuestionsSection}${suggested}${guidance}`,
+      text: `✓ Response Recorded\n\nProgress: ${progress}${scoreSection}${newQuestionsSection}${suggested}${guidance}`,
     },
   ];
 }

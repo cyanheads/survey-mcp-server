@@ -45,6 +45,10 @@ const OutputSchema = z
   .object({
     status: SessionStatusSchema.describe('Current session status'),
     progress: SessionProgressSchema.describe('Progress metrics'),
+    currentScore: z
+      .number()
+      .optional()
+      .describe('Current accumulated score (if scoring is enabled)'),
     unansweredRequired: z
       .array(EnrichedQuestionSchema)
       .describe('Required questions that still need answers'),
@@ -106,6 +110,7 @@ async function getProgressLogic(
   return {
     status: result.session.status,
     progress: result.session.progress,
+    currentScore: result.session.currentScore,
     unansweredRequired: result.unansweredRequired,
     unansweredOptional: result.unansweredOptional,
     canComplete: result.canComplete,
@@ -127,6 +132,12 @@ function responseFormatter(result: GetProgressResponse): ContentBlock[] {
   const header = `📊 Survey Progress Report`;
   const progressLine = `${progressBar} ${progress.percentComplete}% Complete`;
   const answered = `\nStatus: ${progress.answeredQuestions}/${progress.totalQuestions} questions answered`;
+
+  // Score display if available
+  const scoreInfo =
+    result.currentScore !== undefined
+      ? `🎯 Score: ${result.currentScore} points`
+      : '';
 
   // Time estimation if available
   const timeInfo = progress.estimatedTimeRemaining
@@ -171,6 +182,7 @@ function responseFormatter(result: GetProgressResponse): ContentBlock[] {
     header,
     progressLine,
     answered,
+    scoreInfo,
     timeInfo,
     '',
     requiredStatus,

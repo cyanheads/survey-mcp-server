@@ -22,7 +22,7 @@ import { logger } from '@/utils/index.js';
 const TOOL_NAME = 'survey_complete_session';
 const TOOL_TITLE = 'Complete Survey Session';
 const TOOL_DESCRIPTION =
-  'Finalize a survey session after all required questions have been answered. Validates completion eligibility, marks the session as complete, and returns a summary including duration and total questions answered.';
+  'Finalize a survey session after all required questions have been answered. Validates completion eligibility, marks the session as complete, and returns a summary including duration, total questions answered, and final score (if scoring is enabled).';
 
 const TOOL_ANNOTATIONS: ToolAnnotations = {
   readOnlyHint: false,
@@ -59,6 +59,10 @@ const OutputSchema = z
           .int()
           .describe('Number of questions answered'),
         duration: z.string().describe('Time taken to complete the survey'),
+        finalScore: z
+          .number()
+          .optional()
+          .describe('Final score achieved (if scoring is enabled)'),
       })
       .describe('Survey completion summary'),
     message: z.string().describe('Completion confirmation message'),
@@ -92,13 +96,17 @@ async function completeSessionLogic(
     ...appContext,
     sessionId: result.session.sessionId,
     duration: result.summary.duration,
+    finalScore: result.session.currentScore,
   });
 
   return {
     success: result.success,
     sessionId: result.session.sessionId,
     completedAt: result.session.completedAt || new Date().toISOString(),
-    summary: result.summary,
+    summary: {
+      ...result.summary,
+      finalScore: result.session.currentScore,
+    },
     message: 'Survey completed successfully! Thank you for your participation.',
   };
 }
@@ -116,12 +124,19 @@ function responseFormatter(result: CompleteSessionResponse): ContentBlock[] {
   // Visual completion indicator
   const completionBar = `[${'█'.repeat(10)}] 100%`;
 
-  const summary = [
+  const summaryLines = [
     '\n**Summary:**',
     `${completionBar}`,
     `✅ Questions Answered: ${result.summary.answeredQuestions}/${result.summary.totalQuestions}`,
     `⏱️  Time Spent: ${result.summary.duration}`,
-  ].join('\n');
+  ];
+
+  // Add final score if available
+  if (result.summary.finalScore !== undefined) {
+    summaryLines.push(`🏆 Final Score: ${result.summary.finalScore} points`);
+  }
+
+  const summary = summaryLines.join('\n');
 
   const thankYou = `\n\n💬 ${result.message}`;
 
