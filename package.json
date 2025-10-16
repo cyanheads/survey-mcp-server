@@ -1,6 +1,6 @@
 {
   "name": "@cyanheads/survey-mcp-server",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "mcpName": "io.github.cyanheads/survey-mcp-server",
   "description": "Transform LLMs into intelligent interviewers. MCP server for conducting dynamic, conversational surveys with structured data collection. Features skip logic, session resume, multi-tenancy, and pluggable storage backends.",
   "main": "dist/index.js",
@@ -87,7 +87,7 @@
     "@supabase/supabase-js": "^2.75.0",
     "@types/bun": "^1.3.0",
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^24.7.2",
+    "@types/node": "^24.8.0",
     "@types/node-cron": "^3.0.11",
     "@types/papaparse": "^5.3.16",
     "@types/sanitize-html": "^2.16.0",
