@@ -6,6 +6,7 @@
 
 import type {
   QuestionDefinition,
+  QuestionType,
   ValidationError,
   ValidationResult,
 } from '../types.js';
@@ -14,6 +15,33 @@ import type {
  * Email regex pattern for validation.
  */
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * Type for validator functions.
+ */
+type ValidatorFn = (
+  question: QuestionDefinition,
+  value: unknown,
+  errors: ValidationError[],
+) => void;
+
+/**
+ * Map of question types to their validator functions.
+ * This pattern makes it easy to add new validators without modifying the core logic.
+ */
+const validatorMap: Record<QuestionType, ValidatorFn> = {
+  'free-form': validateFreeForm,
+  'multiple-choice': validateMultipleChoice,
+  'multiple-select': validateMultipleSelect,
+  'rating-scale': validateRatingScale,
+  email: validateEmail,
+  number: validateNumber,
+  boolean: validateBoolean,
+  date: validateDate,
+  datetime: validateDateTime,
+  time: validateTime,
+  matrix: validateMatrix,
+};
 
 /**
  * Validate a response value against a question definition.
@@ -46,41 +74,15 @@ export function validateResponse(
     return { valid: true, errors: [] };
   }
 
-  // Type-specific validation
-  switch (question.type) {
-    case 'free-form':
-      validateFreeForm(question, value, errors);
-      break;
-    case 'multiple-choice':
-      validateMultipleChoice(question, value, errors);
-      break;
-    case 'multiple-select':
-      validateMultipleSelect(question, value, errors);
-      break;
-    case 'rating-scale':
-      validateRatingScale(question, value, errors);
-      break;
-    case 'email':
-      validateEmail(question, value, errors);
-      break;
-    case 'number':
-      validateNumber(question, value, errors);
-      break;
-    case 'boolean':
-      validateBoolean(question, value, errors);
-      break;
-    case 'date':
-      validateDate(question, value, errors);
-      break;
-    case 'datetime':
-      validateDateTime(question, value, errors);
-      break;
-    case 'time':
-      validateTime(question, value, errors);
-      break;
-    case 'matrix':
-      validateMatrix(question, value, errors);
-      break;
+  // Type-specific validation using validator map
+  const validator = validatorMap[question.type];
+  if (validator) {
+    validator(question, value, errors);
+  } else {
+    // Robust handling for unimplemented validators
+    console.warn(
+      `No validator implemented for question type: ${question.type}`,
+    );
   }
 
   return { valid: errors.length === 0, errors };
